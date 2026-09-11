@@ -5,61 +5,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schungzie's Radar System</title>
     <style>
+        /* ===== INTERFACE COLOR THEMES ===== */
+        :root {
+            --c:#00ff00; --cA:0,255,0; --accent:#00aa00;      /* main interface color */
+            --bg:#090b09;                                      /* page background */
+            --dkA:0,14,0; --fldA:0,25,0; --opt:#001a00;        /* dark tinted surfaces */
+            --rs1:#001a00; --rs2:#001200; --rs3:#000a00;       /* radar scope gradient */
+        }
+        body[data-theme="blue"] {
+            --c:#00c8ff; --cA:0,200,255; --accent:#0090c0;
+            --bg:#070a0e;
+            --dkA:0,12,26; --fldA:0,16,34; --opt:#001b30;
+            --rs1:#001a33; --rs2:#001226; --rs3:#000a18;
+        }
+        body[data-theme="red"] {
+            --c:#ff4444; --cA:255,68,68; --accent:#bb2a2a;
+            --bg:#0e0808;
+            --dkA:26,5,5; --fldA:34,0,0; --opt:#2b0505;
+            --rs1:#2b0606; --rs2:#200404; --rs3:#150202;
+        }
+
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { background:#090b09; font-family:'Courier New',monospace; color:#00ff00; overflow:hidden; }
+        body { background:var(--bg); font-family:'Courier New',monospace; color:var(--c); overflow:hidden; }
         .layout { display:flex; height:100vh; }
 
         /* PANEL */
         .panel {
-            width:340px; min-width:340px; background:rgba(0,14,0,0.97);
-            border-right:1px solid rgba(0,255,0,0.2); padding:12px;
+            width:340px; min-width:340px; background:rgba(var(--dkA),0.97);
+            border-right:1px solid rgba(var(--cA),0.2); padding:12px;
             overflow-y:auto; display:flex; flex-direction:column; gap:10px;
         }
         .ptitle {
             font-size:14px; letter-spacing:3px; text-align:center;
-            padding:10px; border-bottom:2px solid rgba(0,255,0,0.3);
-            text-shadow:0 0 12px #00ff00;
+            padding:10px; border-bottom:2px solid rgba(var(--cA),0.3);
+            text-shadow:0 0 12px var(--c);
         }
         .conn {
             text-align:center; padding:7px; font-size:11px;
-            border:1px solid rgba(0,255,0,0.15); border-radius:3px;
+            border:1px solid rgba(var(--cA),0.15); border-radius:3px;
         }
-        .conn.ok { color:#00ff00; border-color:rgba(0,255,0,0.4); background:rgba(0,255,0,0.04); }
+        .conn.ok { color:var(--c); border-color:rgba(var(--cA),0.4); background:rgba(var(--cA),0.04); }
         .conn.no { color:#ff4444; border-color:rgba(255,60,60,0.4); animation:bk 1s infinite; }
         @keyframes bk { 50%{opacity:0.4;} }
 
         .sec {
-            border:1px solid rgba(0,255,0,0.12); padding:10px;
-            background:rgba(0,255,0,0.015); border-radius:3px;
+            border:1px solid rgba(var(--cA),0.12); padding:10px;
+            background:rgba(var(--cA),0.015); border-radius:3px;
         }
         .sec h3 {
             font-size:10px; letter-spacing:2px; margin-bottom:7px;
-            color:rgba(0,255,0,0.6); border-bottom:1px solid rgba(0,255,0,0.1);
+            color:rgba(var(--cA),0.6); border-bottom:1px solid rgba(var(--cA),0.1);
             padding-bottom:4px;
         }
         .row { display:flex; align-items:center; margin-bottom:5px; gap:7px; }
         .row label {
             font-size:9px; width:60px; min-width:60px;
-            color:rgba(0,255,0,0.5); text-transform:uppercase;
+            color:rgba(var(--cA),0.5); text-transform:uppercase;
         }
         input,select,textarea {
-            flex:1; background:rgba(0,25,0,0.9); border:1px solid rgba(0,255,0,0.2);
-            color:#00ff00; padding:5px 7px; font-family:'Courier New',monospace;
+            flex:1; background:rgba(var(--fldA),0.9); border:1px solid rgba(var(--cA),0.2);
+            color:var(--c); padding:5px 7px; font-family:'Courier New',monospace;
             font-size:10px; outline:none;
         }
-        input:focus,select:focus,textarea:focus { border-color:#00aa00; box-shadow:0 0 6px rgba(0,255,0,0.15); }
+        input:focus,select:focus,textarea:focus { border-color:var(--accent); box-shadow:0 0 6px rgba(var(--cA),0.15); }
         textarea { min-height:30px; resize:vertical; }
-        select option { background:#001a00; color:#00ff00; }
+        select option { background:var(--opt); color:var(--c); }
 
         .b {
-            background:rgba(0,255,0,0.07); border:1px solid rgba(0,255,0,0.3);
-            color:#00ff00; padding:7px 10px; font-family:'Courier New',monospace;
+            background:rgba(var(--cA),0.07); border:1px solid rgba(var(--cA),0.3);
+            color:var(--c); padding:7px 10px; font-family:'Courier New',monospace;
             font-size:10px; cursor:pointer; transition:all 0.2s; width:100%; letter-spacing:1px;
         }
-        .b:hover { background:rgba(0,255,0,0.18); border-color:#00ff00; }
+        .b:hover { background:rgba(var(--cA),0.18); border-color:var(--c); }
         .b.red { border-color:rgba(255,50,50,0.4); color:#ff5555; }
         .b.red:hover { background:rgba(255,50,50,0.12); }
-        .b.active { background:rgba(0,255,0,0.25); border-color:#00ff00; box-shadow:0 0 8px rgba(0,255,0,0.3); }
+        .b.active { background:rgba(var(--cA),0.25); border-color:var(--c); box-shadow:0 0 8px rgba(var(--cA),0.3); }
         .b.place { border-color:rgba(255,255,0,0.5); color:#ffff00; animation:pb 1.5s infinite; }
         @keyframes pb { 50%{box-shadow:0 0 12px rgba(255,255,0,0.3);} }
         .b.cyan { border-color:rgba(0,200,255,0.5); color:#00ccff; }
@@ -77,17 +97,17 @@
         .place-ind.vis { display:block; animation:pb 1.5s infinite; }
 
         .chk { display:flex; align-items:center; gap:6px; font-size:10px; margin:3px 0; }
-        .chk input { accent-color:#00ff00; flex:none; }
+        .chk input { accent-color:var(--c); flex:none; }
 
         /* Contact list */
         .clist { max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:3px; }
         .ci {
             display:flex; align-items:center; gap:5px; padding:5px 7px;
-            border:1px solid rgba(0,255,0,0.08); font-size:9px;
+            border:1px solid rgba(var(--cA),0.08); font-size:9px;
             cursor:pointer; transition:all 0.15s;
         }
-        .ci:hover { background:rgba(0,255,0,0.07); }
-        .ci.sel { border-color:#00ff00; background:rgba(0,255,0,0.1); }
+        .ci:hover { background:rgba(var(--cA),0.07); }
+        .ci.sel { border-color:var(--c); background:rgba(var(--cA),0.1); }
 
         .cd { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
         .cd.friendly { background:#3399ff; }
@@ -100,26 +120,26 @@
 
         .cmeta { flex:1; overflow:hidden; }
         .cname { font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .csub { color:rgba(0,255,0,0.35); font-size:8px; }
+        .csub { color:rgba(var(--cA),0.35); font-size:8px; }
         .cdel { color:#ff5555; cursor:pointer; font-size:11px; padding:0 3px; opacity:0.5; }
         .cdel:hover { opacity:1; }
 
         .room-box {
             text-align:center; padding:8px;
-            background:rgba(0,255,0,0.04); border:1px solid rgba(0,255,0,0.2); border-radius:3px;
+            background:rgba(var(--cA),0.04); border:1px solid rgba(var(--cA),0.2); border-radius:3px;
         }
         .room-code {
-            font-size:16px; letter-spacing:4px; color:#00ff00;
-            text-shadow:0 0 10px #00ff00; margin:4px 0; cursor:pointer;
+            font-size:16px; letter-spacing:4px; color:var(--c);
+            text-shadow:0 0 10px var(--c); margin:4px 0; cursor:pointer;
         }
         .room-code:hover { text-decoration:underline; }
 
         .log {
             font-size:8px; height:80px; overflow-y:auto;
-            border:1px solid rgba(0,255,0,0.08); padding:5px;
-            background:rgba(0,8,0,0.5); border-radius:3px;
+            border:1px solid rgba(var(--cA),0.08); padding:5px;
+            background:rgba(var(--dkA),0.5); border-radius:3px;
         }
-        .log div { padding:1px 0; color:rgba(0,255,0,0.45); border-bottom:1px solid rgba(0,255,0,0.03); }
+        .log div { padding:1px 0; color:rgba(var(--cA),0.45); border-bottom:1px solid rgba(var(--cA),0.03); }
 
         /* Arrow pad for moving position */
         .arrow-pad {
@@ -127,11 +147,11 @@
             gap:3px; width:120px; margin:6px auto;
         }
         .arrow-pad .ab {
-            background:rgba(0,255,0,0.08); border:1px solid rgba(0,255,0,0.25);
-            color:#00ff00; padding:6px; text-align:center; cursor:pointer;
+            background:rgba(var(--cA),0.08); border:1px solid rgba(var(--cA),0.25);
+            color:var(--c); padding:6px; text-align:center; cursor:pointer;
             font-size:12px; font-family:'Courier New',monospace; transition:all 0.15s;
         }
-        .arrow-pad .ab:hover { background:rgba(0,255,0,0.2); border-color:#00ff00; }
+        .arrow-pad .ab:hover { background:rgba(var(--cA),0.2); border-color:var(--c); }
         .arrow-pad .ab.blank { border:none; background:none; cursor:default; }
 
         /* Perspective list */
@@ -144,7 +164,7 @@
         .pi:hover { background:rgba(0,200,255,0.08); }
         .pi.viewing { border-color:#00ccff; background:rgba(0,200,255,0.12); }
         .pi .pip { width:8px; height:8px; border-radius:50%; background:#00ccff; box-shadow:0 0 4px #00ccff; flex-shrink:0; }
-        .pi .pip.self { background:#00ff00; box-shadow:0 0 4px #00ff00; }
+        .pi .pip.self { background:var(--c); box-shadow:0 0 4px var(--c); }
 
         /* ===== RADAR ===== */
         .radar-area {
@@ -153,8 +173,8 @@
             padding:15px; position:relative;
         }
         .rh { text-align:center; margin-bottom:10px; }
-        .rh h1 { font-size:20px; letter-spacing:5px; text-shadow:0 0 18px #00ff00,0 0 35px rgba(0,255,0,0.2); }
-        .rh .sub { font-size:9px; color:rgba(0,255,0,0.4); letter-spacing:3px; margin-top:3px; }
+        .rh h1 { font-size:20px; letter-spacing:5px; text-shadow:0 0 18px var(--c),0 0 35px rgba(var(--cA),0.2); }
+        .rh .sub { font-size:9px; color:rgba(var(--cA),0.4); letter-spacing:3px; margin-top:3px; }
         .rh .view-label {
             font-size:11px; color:#00ccff; letter-spacing:2px; margin-top:4px;
             min-height:16px; text-shadow:0 0 8px rgba(0,200,255,0.5);
@@ -168,9 +188,9 @@
 
         .rs {
             position:relative; width:100%; height:100%; border-radius:50%;
-            background:radial-gradient(circle,#001a00 0%,#001200 50%,#000a00 100%);
-            border:2px solid rgba(0,255,0,0.35); overflow:hidden;
-            box-shadow:0 0 30px rgba(0,255,0,0.2),inset 0 0 60px rgba(0,255,0,0.03);
+            background:radial-gradient(circle,var(--rs1) 0%,var(--rs2) 50%,var(--rs3) 100%);
+            border:2px solid rgba(var(--cA),0.35); overflow:hidden;
+            box-shadow:0 0 30px rgba(var(--cA),0.2),inset 0 0 60px rgba(var(--cA),0.03);
             cursor:crosshair; animation:fl 8s infinite;
         }
         @keyframes fl { 93%{opacity:0.88;} 94%{opacity:1;} 96%{opacity:0.92;} 97%{opacity:1;} }
@@ -178,37 +198,45 @@
         .rs::before {
             content:''; position:absolute; inset:0;
             background:
-                radial-gradient(circle,transparent 19%,rgba(0,255,0,0.1) 20%,transparent 21%),
-                radial-gradient(circle,transparent 39%,rgba(0,255,0,0.08) 40%,transparent 41%),
-                radial-gradient(circle,transparent 59%,rgba(0,255,0,0.06) 60%,transparent 61%),
-                radial-gradient(circle,transparent 79%,rgba(0,255,0,0.04) 80%,transparent 81%);
+                radial-gradient(circle,transparent 19%,rgba(var(--cA),0.1) 20%,transparent 21%),
+                radial-gradient(circle,transparent 39%,rgba(var(--cA),0.08) 40%,transparent 41%),
+                radial-gradient(circle,transparent 59%,rgba(var(--cA),0.06) 60%,transparent 61%),
+                radial-gradient(circle,transparent 79%,rgba(var(--cA),0.04) 80%,transparent 81%);
             pointer-events:none;
         }
 
-        .xh,.xv { position:absolute; background:rgba(0,255,0,0.06); pointer-events:none; }
+        .xh,.xv { position:absolute; background:rgba(var(--cA),0.06); pointer-events:none; }
         .xh { width:100%; height:1px; top:50%; }
         .xv { width:1px; height:100%; left:50%; }
-        .xd1,.xd2 { position:absolute; width:141%; height:1px; top:50%; left:-20.5%; background:rgba(0,255,0,0.04); pointer-events:none; }
+        .xd1,.xd2 { position:absolute; width:141%; height:1px; top:50%; left:-20.5%; background:rgba(var(--cA),0.04); pointer-events:none; }
         .xd1 { transform:rotate(45deg); }
         .xd2 { transform:rotate(-45deg); }
 
         .center-pip {
-            position:absolute; width:8px; height:8px; background:#00ff00;
+            position:absolute; width:8px; height:8px; background:var(--c);
             border-radius:50%; top:50%; left:50%; transform:translate(-50%,-50%);
-            box-shadow:0 0 12px #00ff00; z-index:10; pointer-events:none;
+            box-shadow:0 0 12px var(--c); z-index:10; pointer-events:none;
         }
         .center-pip.op { background:#00ccff; box-shadow:0 0 12px #00ccff; width:10px; height:10px; }
 
         .sw {
             position:absolute; width:50%; height:2px; top:50%; left:50%;
             transform-origin:left center;
-            background:linear-gradient(to right,rgba(0,255,0,0.85),rgba(0,255,0,0.1),transparent);
+            background:linear-gradient(to right,rgba(var(--cA),0.85),rgba(var(--cA),0.1),transparent);
             animation:swp 4s linear infinite; z-index:5; pointer-events:none;
         }
+        /* FIXED: sweep trail. The old gradient was anchored to the center of a
+           quarter-size element (so the glow orbited off-center, detached from
+           the beam) and was 90° out of phase with the sweep line. Now the cone
+           starts at the radar's center (at 50% 50%) and is aligned with the
+           beam (from 90deg = East, exactly where the sweep line points at 0°
+           rotation), fading out BEHIND the beam as it sweeps clockwise. */
         .swg {
-            position:absolute; width:50%; height:50%; top:50%; left:50%;
-            transform-origin:top left;
-            background:conic-gradient(from 0deg,rgba(0,255,0,0.12) 0deg,rgba(0,255,0,0.04) 25deg,transparent 40deg);
+            position:absolute; inset:0; border-radius:50%;
+            background:conic-gradient(from 90deg at 50% 50%,
+                transparent 315deg,
+                rgba(var(--cA),0.05) 340deg,
+                rgba(var(--cA),0.13) 360deg);
             animation:swp 4s linear infinite; z-index:4; pointer-events:none;
         }
         @keyframes swp { to{transform:rotate(360deg);} }
@@ -219,7 +247,7 @@
             pointer-events:none; z-index:8; opacity:0.3;
         }
 
-        .dl { position:absolute; font-size:11px; color:rgba(0,255,0,0.4); font-weight:bold; pointer-events:none; z-index:3; }
+        .dl { position:absolute; font-size:11px; color:rgba(var(--cA),0.4); font-weight:bold; pointer-events:none; z-index:3; }
         .dn { top:8px; left:50%; transform:translateX(-50%); }
         .ds_ { bottom:8px; left:50%; transform:translateX(-50%); }
         .de { right:12px; top:50%; transform:translateY(-50%); }
@@ -250,27 +278,30 @@
         }
 
         /* Tooltip */
+        /* FIXED: tooltip is position:fixed and lives OUTSIDE the radar circle,
+           so the scope's circular overflow:hidden can never clip it */
         .tip {
-            display:none; position:absolute; background:rgba(0,8,0,0.96);
-            border:1px solid rgba(0,255,0,0.5); padding:10px; font-size:9px;
-            z-index:100; pointer-events:none; min-width:155px; max-width:230px;
+            display:none; position:fixed; background:rgba(var(--dkA),0.96);
+            border:1px solid rgba(var(--cA),0.5); padding:10px; font-size:9px;
+            z-index:300; pointer-events:none; min-width:155px; max-width:230px;
+            border-radius:4px; box-shadow:0 4px 22px rgba(0,0,0,0.65);
         }
         .tip.vis { display:block; }
-        .tip h4 { font-size:11px; margin-bottom:5px; border-bottom:1px solid rgba(0,255,0,0.2); padding-bottom:4px; }
+        .tip h4 { font-size:11px; margin-bottom:5px; border-bottom:1px solid rgba(var(--cA),0.2); padding-bottom:4px; }
         .tr { display:flex; justify-content:space-between; margin:2px 0; }
-        .tl { color:rgba(0,255,0,0.45); }
-        .tn { margin-top:5px; padding-top:5px; border-top:1px solid rgba(0,255,0,0.1); color:rgba(0,255,0,0.6); font-style:italic; font-size:8px; }
+        .tl { color:rgba(var(--cA),0.45); }
+        .tn { margin-top:5px; padding-top:5px; border-top:1px solid rgba(var(--cA),0.1); color:rgba(var(--cA),0.6); font-style:italic; font-size:8px; }
 
         /* Info bar - FIXED JITTER */
         .ibar { margin-top:12px; display:flex; gap:8px; justify-content:center; }
         .ib {
-            border:1px solid rgba(0,255,0,0.15); padding:6px 10px;
-            font-size:10px; background:rgba(0,255,0,0.02); text-align:center;
+            border:1px solid rgba(var(--cA),0.15); padding:6px 10px;
+            font-size:10px; background:rgba(var(--cA),0.02); text-align:center;
             border-radius:3px; min-width:75px;
         }
         .ib.wide { min-width:110px; } /* FIXED: wider cursor box */
-        .ib .il { color:rgba(0,255,0,0.35); font-size:8px; margin-bottom:2px; letter-spacing:1px; }
-        .ib .iv { color:#00ff00; text-shadow:0 0 5px rgba(0,255,0,0.3); font-weight:bold; white-space:nowrap; }
+        .ib .il { color:rgba(var(--cA),0.35); font-size:8px; margin-bottom:2px; letter-spacing:1px; }
+        .ib .iv { color:var(--c); text-shadow:0 0 5px rgba(var(--cA),0.3); font-weight:bold; white-space:nowrap; }
 
         .legend { display:flex; gap:10px; margin-top:8px; font-size:8px; justify-content:center; flex-wrap:wrap; }
         .legend-i { display:flex; align-items:center; gap:4px; }
@@ -286,7 +317,7 @@
         @keyframes abk { from{opacity:0.6;} to{opacity:1;} }
 
         .click-ring {
-            position:absolute; border:2px solid rgba(0,255,0,0.5); border-radius:50%;
+            position:absolute; border:2px solid rgba(var(--cA),0.5); border-radius:50%;
             transform:translate(-50%,-50%); pointer-events:none; z-index:15;
             animation:crng 0.5s ease-out forwards;
         }
@@ -294,14 +325,14 @@
 
         /* Context */
         .ctx {
-            display:none; position:fixed; background:rgba(5,12,5,0.98);
-            border:1px solid rgba(0,255,0,0.4); z-index:200; min-width:140px;
+            display:none; position:fixed; background:rgba(var(--dkA),0.98);
+            border:1px solid rgba(var(--cA),0.4); z-index:200; min-width:140px;
         }
         .ctx.vis { display:block; }
-        .ctx-i { padding:7px 12px; font-size:10px; cursor:pointer; color:#00ff00; }
-        .ctx-i:hover { background:rgba(0,255,0,0.12); }
+        .ctx-i { padding:7px 12px; font-size:10px; cursor:pointer; color:var(--c); }
+        .ctx-i:hover { background:rgba(var(--cA),0.12); }
         .ctx-i.danger { color:#ff5555; }
-        .ctx-div { height:1px; background:rgba(0,255,0,0.15); }
+        .ctx-div { height:1px; background:rgba(var(--cA),0.15); }
 
         /* Modal */
         .mbg {
@@ -310,22 +341,22 @@
         }
         .mbg.vis { display:flex; }
         .mbox {
-            background:rgba(0,12,0,0.98); border:1px solid rgba(0,255,0,0.4);
+            background:rgba(var(--dkA),0.98); border:1px solid rgba(var(--cA),0.4);
             padding:18px; min-width:320px; max-width:400px; border-radius:4px;
         }
-        .mbox h2 { font-size:13px; letter-spacing:2px; margin-bottom:12px; border-bottom:1px solid rgba(0,255,0,0.2); padding-bottom:7px; }
+        .mbox h2 { font-size:13px; letter-spacing:2px; margin-bottom:12px; border-bottom:1px solid rgba(var(--cA),0.2); padding-bottom:7px; }
 
         ::-webkit-scrollbar { width:5px; }
-        ::-webkit-scrollbar-track { background:rgba(0,15,0,0.4); }
-        ::-webkit-scrollbar-thumb { background:rgba(0,255,0,0.25); border-radius:3px; }
+        ::-webkit-scrollbar-track { background:rgba(var(--dkA),0.4); }
+        ::-webkit-scrollbar-thumb { background:rgba(var(--cA),0.25); border-radius:3px; }
 
         input[type="range"] {
             -webkit-appearance:none; appearance:none;
-            height:6px; background:rgba(0,255,0,0.1); border-radius:3px; border:none; padding:0;
+            height:6px; background:rgba(var(--cA),0.1); border-radius:3px; border:none; padding:0;
         }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance:none; width:14px; height:14px;
-            border-radius:50%; background:#00ff00; cursor:pointer; box-shadow:0 0 5px #00ff00;
+            border-radius:50%; background:var(--c); cursor:pointer; box-shadow:0 0 5px var(--c);
         }
 
         .rs.rotated { transition: transform 0.4s ease; }
@@ -347,9 +378,9 @@
                 <button class="b" onclick="newRoom()">NEW</button>
             </div>
             <div class="room-box" style="margin-top:7px;">
-                <div style="font-size:8px;color:rgba(0,255,0,0.4);">ROOM</div>
+                <div style="font-size:8px;color:rgba(var(--cA),0.4);">ROOM</div>
                 <div class="room-code" id="roomCode" onclick="copyLink()">---</div>
-                <div style="font-size:9px;color:rgba(0,255,0,0.4);" id="ucount">0 operators</div>
+                <div style="font-size:9px;color:rgba(var(--cA),0.4);" id="ucount">0 operators</div>
             </div>
         </div>
 
@@ -363,7 +394,7 @@
         <!-- PERSPECTIVE -->
         <div class="sec">
             <h3>👁 PERSPECTIVE</h3>
-            <p style="font-size:8px;color:rgba(0,255,0,0.4);margin-bottom:6px;">
+            <p style="font-size:8px;color:rgba(var(--cA),0.4);margin-bottom:6px;">
                 Switch view to any operator-type contact. Move your view with arrows.
             </p>
             <div class="brow">
@@ -375,7 +406,7 @@
                 </div>
             </div>
             <div style="text-align:center;margin-top:8px;">
-                <div style="font-size:9px;color:rgba(0,255,0,0.5);margin-bottom:4px;">MOVE VIEW CENTER</div>
+                <div style="font-size:9px;color:rgba(var(--cA),0.5);margin-bottom:4px;">MOVE VIEW CENTER</div>
                 <div class="arrow-pad">
                     <div class="ab blank"></div>
                     <div class="ab" onclick="moveView(0,-2)">▲</div>
@@ -412,8 +443,8 @@
                 <input type="range" id="rotSlider" min="0" max="360" value="0" oninput="setRotation(this.value)">
             </div>
             <div style="text-align:center;margin:4px 0;">
-                <span style="font-size:14px;color:#00ff00;text-shadow:0 0 8px rgba(0,255,0,0.5);" id="rotDisplay">0°</span>
-                <span style="font-size:9px;color:rgba(0,255,0,0.4);margin-left:6px;" id="rotLabel">NORTH-UP</span>
+                <span style="font-size:14px;color:var(--c);text-shadow:0 0 8px rgba(var(--cA),0.5);" id="rotDisplay">0°</span>
+                <span style="font-size:9px;color:rgba(var(--cA),0.4);margin-left:6px;" id="rotLabel">NORTH-UP</span>
             </div>
             <div class="brow" style="margin-top:6px;">
                 <button class="b" onclick="setRotation(0)">N ↑</button>
@@ -462,6 +493,13 @@
         <!-- SETTINGS -->
         <div class="sec">
             <h3>⚙ DISPLAY</h3>
+            <div class="row"><label>COLOR</label>
+                <select id="themeSel" onchange="setTheme(this.value)">
+                    <option value="green">🟢 GREEN</option>
+                    <option value="blue">🔵 BLUE</option>
+                    <option value="red">🔴 RED</option>
+                </select>
+            </div>
             <div class="row"><label>RANGE</label>
                 <select id="rangeSel" onchange="setRange(this.value)">
                     <option value="25">25 NM</option>
@@ -481,7 +519,7 @@
         <!-- LIST -->
         <div class="sec">
             <h3>📡 ALL CONTACTS (<span id="cc">0</span>)</h3>
-            <div class="clist" id="clist"><div style="color:rgba(0,255,0,0.2);font-size:9px;text-align:center;padding:12px;">No contacts</div></div>
+            <div class="clist" id="clist"><div style="color:rgba(var(--cA),0.2);font-size:9px;text-align:center;padding:12px;">No contacts</div></div>
             <div class="brow" style="margin-top:6px;">
                 <button class="b red" onclick="clearAll()">✕ CLEAR</button>
                 <button class="b" onclick="exprt()">▼ EXPORT</button>
@@ -514,7 +552,7 @@
             <div class="view-label" id="viewLabel"></div>
         </div>
         <div class="sbar">
-            <span>SYS: <b style="color:#00ff00;">ONLINE</b></span>
+            <span>SYS: <b style="color:var(--c);">ONLINE</b></span>
             <span id="dtDisp">--:-- ZULU</span>
             <span>LINK: <b id="linkSt" style="color:#ff4444;">OFFLINE</b></span>
         </div>
@@ -529,7 +567,6 @@
                 <div class="scan" id="scanEl"></div>
                 <span class="dl dn">N</span><span class="dl ds_">S</span>
                 <span class="dl de">E</span><span class="dl dw">W</span>
-                <div class="tip" id="tip"></div>
             </div>
         </div>
 
@@ -551,6 +588,9 @@
         </div>
     </div>
 </div>
+
+<!-- Tooltip (kept outside the radar circle so it never gets clipped) -->
+<div class="tip" id="tip"></div>
 
 <!-- CTX -->
 <div class="ctx" id="ctx">
@@ -600,6 +640,76 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <script>
+    // ===== OFFLINE FALLBACK =====
+    // If the Firebase SDK cannot load (e.g. no network), this tiny shim mimics
+    // the slice of firebase.database() the radar uses, so everything still
+    // works standalone. When Firebase loads normally, it is never used.
+    function createLocalDB() {
+        const root = { '.info': { connected: true } };
+        const listeners = [];
+        const clone = v => (v === undefined ? null : JSON.parse(JSON.stringify(v)));
+        const parts = p => p.split('/').filter(Boolean);
+        const getNode = p => {
+            let o = root;
+            for (const k of parts(p)) { if (o == null || typeof o !== 'object') return undefined; o = o[k]; }
+            return o;
+        };
+        const setNode = (p, v) => {
+            const ps = parts(p); if (!ps.length) return;
+            let o = root;
+            for (let i = 0; i < ps.length - 1; i++) {
+                if (typeof o[ps[i]] !== 'object' || o[ps[i]] === null) o[ps[i]] = {};
+                o = o[ps[i]];
+            }
+            if (v === null || v === undefined) delete o[ps[ps.length - 1]];
+            else o[ps[ps.length - 1]] = JSON.parse(JSON.stringify(v));
+        };
+        const emitValue = changed => {
+            listeners.forEach(l => {
+                if (l.ev !== 'value') return;
+                if (changed === l.path || changed.startsWith(l.path + '/') || l.path.startsWith(changed + '/'))
+                    l.cb({ key: '', val: () => clone(getNode(l.path)) });
+            });
+        };
+        const emitChild = (ev, parentPath, key, val) => {
+            listeners.forEach(l => { if (l.path === parentPath && l.ev === ev) l.cb({ key, val: () => clone(val) }); });
+        };
+        const applySet = (p, v) => {
+            const ps = parts(p), key = ps[ps.length - 1], parentPath = ps.slice(0, -1).join('/');
+            const before = getNode(p);
+            setNode(p, v);
+            if (v === null || v === undefined) {
+                if (before !== undefined) emitChild('child_removed', parentPath, key, before);
+                if (before && typeof before === 'object')
+                    Object.keys(before).forEach(k => emitChild('child_removed', p, k, before[k]));
+            } else if (before === undefined) {
+                emitChild('child_added', parentPath, key, v);
+            } else {
+                emitChild('child_changed', parentPath, key, v);
+            }
+            emitValue(p);
+        };
+        const makeRef = p => ({
+            child: id => makeRef(p + '/' + id),
+            on(ev, cb) {
+                listeners.push({ path: p, ev, cb });
+                if (ev === 'value') cb({ key: '', val: () => clone(getNode(p)) });
+                if (ev === 'child_added') {
+                    const cur = getNode(p);
+                    if (cur && typeof cur === 'object')
+                        Object.keys(cur).forEach(k => cb({ key: k, val: () => clone(cur[k]) }));
+                }
+                return this;
+            },
+            off() { for (let i = listeners.length - 1; i >= 0; i--) if (listeners[i].path === p) listeners.splice(i, 1); },
+            set(v) { applySet(p, v); },
+            update(obj) { applySet(p, Object.assign({}, getNode(p) || {}, obj)); },
+            remove() { applySet(p, null); },
+            onDisconnect() { return { remove() {} }; }
+        });
+        return { ref: p => makeRef(p) };
+    }
+
     const firebaseConfig = {
         apiKey: "AIzaSyBRQ_UztF2lwcX81RVinv-5FBaumAclAuk",
         authDomain: "schungdar.firebaseapp.com",
@@ -611,8 +721,16 @@
         measurementId: "G-01PFJWNWB1"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    // Connect to Firebase if the SDK loaded; otherwise fall back to the local
+    // in-memory database above so the radar still works offline.
+    let db = null, localMode = false;
+    try {
+        if (typeof firebase !== 'undefined' && firebase.database) {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+        }
+    } catch (err) { console.warn('Firebase init failed:', err); }
+    if (!db) { db = createLocalDB(); localMode = true; }
 
     // STATE
     let C = {};               // all contacts
@@ -650,9 +768,6 @@
             const lbl = C[k].el ? C[k].el.querySelector('.bl') : null;
             if (lbl) lbl.style.transform = 'translateX(-50%) rotate(' + (-radarRot) + 'deg)';
         }
-
-        // Counter-rotate tooltip
-        tip.style.transform = 'rotate(' + (-radarRot) + 'deg)';
 
         // Update slider and display
         document.getElementById('rotSlider').value = radarRot;
@@ -799,9 +914,9 @@
         db.ref('.info/connected').on('value', s => {
             const ok = s.val();
             document.getElementById('conn').className = ok ? 'conn ok' : 'conn no';
-            document.getElementById('conn').textContent = ok ? '● CONNECTED — LIVE' : '⊘ DISCONNECTED';
-            document.getElementById('linkSt').textContent = ok ? 'LIVE' : 'OFFLINE';
-            document.getElementById('linkSt').style.color = ok ? '#00ff00' : '#ff4444';
+            document.getElementById('conn').textContent = !ok ? '⊘ DISCONNECTED' : (localMode ? '● LOCAL MODE' : '● CONNECTED — LIVE');
+            document.getElementById('linkSt').textContent = !ok ? 'OFFLINE' : (localMode ? 'LOCAL' : 'LIVE');
+            document.getElementById('linkSt').style.color = ok ? 'var(--c)' : '#ff4444';
         });
 
         L('Joined: <b>' + rn.toUpperCase() + '</b>');
@@ -895,7 +1010,7 @@
         if (!document.getElementById('chkLbl').checked) lbl.style.display = 'none';
         el.appendChild(lbl);
 
-        const c = {...d, el, lastSweep: 0};
+        const c = {...d, el, lastSweep: Date.now()}; // FIXED: new blips show up immediately instead of staying dark until the beam crosses them
 
         el.addEventListener('mouseenter', e => showTip(e, c));
         el.addEventListener('mouseleave', () => tip.classList.remove('vis'));
@@ -1043,7 +1158,6 @@
     function showTip(e, c) {
         // FIXED: Always read fresh data from C
         const fresh = C[c.id] || c;
-        const r = RS.getBoundingClientRect();
         const cen = getViewCenter();
         const dx = fresh.x-cen.x, dy = fresh.y-cen.y;
         const dist = (Math.sqrt(dx*dx+dy*dy)/50*range).toFixed(1);
@@ -1062,22 +1176,40 @@
             ${fresh.notes ? `<div class="tn">"${fresh.notes}"</div>` : ''}
         `;
 
-        // Position tip near blip
-        const pos = globalToView(fresh.x, fresh.y) || {x:50,y:50};
-        let left = (pos.x/100)*r.width + 15;
-        let top = (pos.y/100)*r.height - 30;
-        if (left+170>r.width) left-=195;
-        if (top<10) top+=50;
-        tip.style.left=left+'px'; tip.style.top=top+'px';
+        // FIXED: the tooltip is now position:fixed OUTSIDE the radar circle
+        // (the scope used to clip it with overflow:hidden). Anchor it to the
+        // blip's on-screen position and clamp it inside the window so it can
+        // never be cut off — not by the radar edge, not by the window edge.
         tip.classList.add('vis');
+        tip.style.left = '-9999px'; tip.style.top = '0px';   // park it to measure
+        const tw = tip.offsetWidth, th = tip.offsetHeight;
+        const br = fresh.el.getBoundingClientRect();
+
+        let left = br.right + 14;                     // prefer the right of the blip
+        let top = br.top + br.height/2 - th/2;
+        if (left + tw > window.innerWidth - 8)        // no room on the right -> flip left
+            left = br.left - tw - 14;
+        if (top + th > window.innerHeight - 8) top = window.innerHeight - th - 8;
+        if (top < 8) top = 8;
+        if (left < 8) left = 8;
+        tip.style.left = left + 'px';
+        tip.style.top = top + 'px';
     }
 
     // ===== CONTEXT =====
     function openCtx(e, c) {
         e.preventDefault(); e.stopPropagation();
         ctxId = c.id;
-        ctx.style.left = e.clientX+'px'; ctx.style.top = e.clientY+'px';
         ctx.classList.add('vis');
+        // FIXED: clamp the menu inside the window so it never gets cut off
+        let x = e.clientX, y = e.clientY;
+        const w = ctx.offsetWidth, h = ctx.offsetHeight;
+        if (x + w > window.innerWidth - 6)  x = window.innerWidth - w - 6;
+        if (y + h > window.innerHeight - 6) y = window.innerHeight - h - 6;
+        if (x < 6) x = 6;
+        if (y < 6) y = 6;
+        ctx.style.left = x + 'px';
+        ctx.style.top = y + 'px';
     }
 
     document.addEventListener('click', () => ctx.classList.remove('vis'));
@@ -1205,7 +1337,7 @@
     function buildList() {
         const list = document.getElementById('clist');
         const arr = Object.values(C);
-        if (!arr.length) { list.innerHTML='<div style="color:rgba(0,255,0,0.2);font-size:9px;text-align:center;padding:12px;">No contacts</div>'; return; }
+        if (!arr.length) { list.innerHTML='<div style="color:rgba(var(--cA),0.2);font-size:9px;text-align:center;padding:12px;">No contacts</div>'; return; }
         list.innerHTML='';
         arr.forEach(c => {
             const it = document.createElement('div');
@@ -1230,6 +1362,13 @@
     }
 
     // ===== SETTINGS =====
+    // Switch the whole interface color (green / blue / red)
+    function setTheme(t) {
+        document.body.setAttribute('data-theme', t);
+        const sel = document.getElementById('themeSel');
+        if (sel) sel.value = t;
+        try { localStorage.setItem('szTheme', t); } catch(err) {}
+    }
     function setRange(v) { range=parseInt(v); document.getElementById('vR').textContent=v+' NM'; }
     function togLbl() {
         const on=document.getElementById('chkLbl').checked;
@@ -1312,7 +1451,7 @@
     function L(msg) {
         const box=document.getElementById('logBox');
         const d=document.createElement('div');
-        d.innerHTML='<span style="color:rgba(0,255,0,0.25);">['+new Date().toLocaleTimeString()+']</span> '+msg;
+        d.innerHTML='<span style="color:rgba(var(--cA),0.25);">['+new Date().toLocaleTimeString()+']</span> '+msg;
         box.insertBefore(d,box.firstChild);
         if(box.children.length>40) box.removeChild(box.lastChild);
     }
@@ -1341,6 +1480,9 @@
     if (params.get('room')) document.getElementById('inRoom').value = params.get('room');
 
     // ===== INIT =====
+    // Restore last chosen interface color (if saved)
+    try { const savedTheme = localStorage.getItem('szTheme'); if (savedTheme) setTheme(savedTheme); } catch(err) {}
+    if (localMode) L('Offline mode — Firebase unreachable, running standalone');
     sweepLoop();
     setInterval(tick, 1000);
     setInterval(moveLoop, 60);
@@ -1351,4 +1493,4 @@
     setTimeout(()=>joinRoom(), 400);
 </script>
 </body>
-</html><select id="sweepRate" onchange="setSweep(this.value)">
+</html>
