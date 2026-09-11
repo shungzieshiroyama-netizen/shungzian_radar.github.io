@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schungzie's Radar System</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:#090b09; font-family:'Courier New',monospace; color:#00ff00; overflow:hidden; }
+        .layout { display:flex; height:100vh; }
+
+        /* PANEL */
+        .panel {
+            width:340px; min-width:340px; background:rgba(0,14,0,0.97);
+            border-right:1px solid rgba(0,255,0,0.2); padding:12px;
+            overflow-y:auto; display:flex; flex-direction:column; gap:10px;
+        }
+        .ptitle {
+            font-size:14px; letter-spacing:3px; text-align:center;
+            padding:10px; border-bottom:2px solid rgba(0,255,0,0.3);
+            text-shadow:0 0 12px #00ff00;
+        }
+        .conn {
+            text-align:center; padding:7px; font-size:11px;
+            border:1px solid rgba(0,255,0,0.15); border-radius:3px;
+        }
+        .conn.ok { color:#00ff00; border-color:rgba(0,255,0,0.4); background:rgba(0,255,0,0.04); }
+        .conn.no { color:#ff4444; border-color:rgba(255,60,60,0.4); animation:bk 1s infinite; }
+        @keyframes bk { 50%{opacity:0.4;} }
+
+        .sec {
+            border:1px solid rgba(0,255,0,0.12); padding:10px;
+            background:rgba(0,255,0,0.015); border-radius:3px;
+        }
+        .sec h3 {
+            font-size:10px; letter-spacing:2px; margin-bottom:7px;
+            color:rgba(0,255,0,0.6); border-bottom:1px solid rgba(0,255,0,0.1);
+            padding-bottom:4px;
+        }
+        .row { display:flex; align-items:center; margin-bottom:5px; gap:7px; }
+        .row label {
+            font-size:9px; width:60px; min-width:60px;
+            color:rgba(0,255,0,0.5); text-transform:uppercase;
+        }
+        input,select,textarea {
+            flex:1; background:rgba(0,25,0,0.9); border:1px solid rgba(0,255,0,0.2);
+            color:#00ff00; padding:5px 7px; font-family:'Courier New',monospace;
+            font-size:10px; outline:none;
+        }
+        input:focus,select:focus,textarea:focus { border-color:#00aa00; box-shadow:0 0 6px rgba(0,255,0,0.15); }
+        textarea { min-height:30px; resize:vertical; }
+        select option { background:#001a00; color:#00ff00; }
+
+        .b {
+            background:rgba(0,255,0,0.07); border:1px solid rgba(0,255,0,0.3);
+            color:#00ff00; padding:7px 10px; font-family:'Courier New',monospace;
+            font-size:10px; cursor:pointer; transition:all 0.2s; width:100%; letter-spacing:1px;
+        }
+        .b:hover { background:rgba(0,255,0,0.18); border-color:#00ff00; }
+        .b.red { border-color:rgba(255,50,50,0.4); color:#ff5555; }
+        .b.red:hover { background:rgba(255,50,50,0.12); }
+        .b.active { background:rgba(0,255,0,0.25); border-color:#00ff00; box-shadow:0 0 8px rgba(0,255,0,0.3); }
+        .b.place { border-color:rgba(255,255,0,0.5); color:#ffff00; animation:pb 1.5s infinite; }
+        @keyframes pb { 50%{box-shadow:0 0 12px rgba(255,255,0,0.3);} }
+        .b.cyan { border-color:rgba(0,200,255,0.5); color:#00ccff; }
+        .b.cyan:hover { background:rgba(0,200,255,0.12); }
+        .b.cyan.active { background:rgba(0,200,255,0.2); border-color:#00ccff; box-shadow:0 0 8px rgba(0,200,255,0.3); }
+
+        .brow { display:flex; gap:5px; }
+        .brow .b { flex:1; }
+
+        .place-ind {
+            display:none; text-align:center; padding:8px;
+            background:rgba(255,255,0,0.06); border:1px solid rgba(255,255,0,0.3);
+            color:#ffff00; font-size:10px;
+        }
+        .place-ind.vis { display:block; animation:pb 1.5s infinite; }
+
+        .chk { display:flex; align-items:center; gap:6px; font-size:10px; margin:3px 0; }
+        .chk input { accent-color:#00ff00; flex:none; }
+
+        /* Contact list */
+        .clist { max-height:180px; overflow-y:auto; display:flex; flex-direction:column; gap:3px; }
+        .ci {
+            display:flex; align-items:center; gap:5px; padding:5px 7px;
+            border:1px solid rgba(0,255,0,0.08); font-size:9px;
+            cursor:pointer; transition:all 0.15s;
+        }
+        .ci:hover { background:rgba(0,255,0,0.07); }
+        .ci.sel { border-color:#00ff00; background:rgba(0,255,0,0.1); }
+
+        .cd { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+        .cd.friendly { background:#3399ff; }
+        .cd.hostile { background:#ff3333; }
+        .cd.unknown { background:#ffff00; }
+        .cd.neutral { background:#00aa00; }
+        .cd.civilian { background:#cc66ff; }
+        .cd.operator { background:#00ccff; border:1px solid rgba(255,255,255,0.3); }
+        .cd.custom { background:#ff9933; }
+
+        .cmeta { flex:1; overflow:hidden; }
+        .cname { font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .csub { color:rgba(0,255,0,0.35); font-size:8px; }
+        .cdel { color:#ff5555; cursor:pointer; font-size:11px; padding:0 3px; opacity:0.5; }
+        .cdel:hover { opacity:1; }
+
+        .room-box {
+            text-align:center; padding:8px;
+            background:rgba(0,255,0,0.04); border:1px solid rgba(0,255,0,0.2); border-radius:3px;
+        }
+        .room-code {
+            font-size:16px; letter-spacing:4px; color:#00ff00;
+            text-shadow:0 0 10px #00ff00; margin:4px 0; cursor:pointer;
+        }
+        .room-code:hover { text-decoration:underline; }
+
+        .log {
+            font-size:8px; height:80px; overflow-y:auto;
+            border:1px solid rgba(0,255,0,0.08); padding:5px;
+            background:rgba(0,8,0,0.5); border-radius:3px;
+        }
+        .log div { padding:1px 0; color:rgba(0,255,0,0.45); border-bottom:1px solid rgba(0,255,0,0.03); }
+
+        /* Arrow pad for moving position */
+        .arrow-pad {
+            display:grid; grid-template-columns:1fr 1fr 1fr;
+            gap:3px; width:120px; margin:6px auto;
+        }
+        .arrow-pad .ab {
+            background:rgba(0,255,0,0.08); border:1px solid rgba(0,255,0,0.25);
+            color:#00ff00; padding:6px; text-align:center; cursor:pointer;
+            font-size:12px; font-family:'Courier New',monospace; transition:all 0.15s;
+        }
+        .arrow-pad .ab:hover { background:rgba(0,255,0,0.2); border-color:#00ff00; }
+        .arrow-pad .ab.blank { border:none; background:none; cursor:default; }
+
+        /* Perspective list */
+        .plist { display:flex; flex-direction:column; gap:3px; margin-top:5px; }
+        .pi {
+            display:flex; align-items:center; gap:5px; padding:5px 7px;
+            border:1px solid rgba(0,200,255,0.1); font-size:9px; cursor:pointer;
+            transition:all 0.15s;
+        }
+        .pi:hover { background:rgba(0,200,255,0.08); }
+        .pi.viewing { border-color:#00ccff; background:rgba(0,200,255,0.12); }
+        .pi .pip { width:8px; height:8px; border-radius:50%; background:#00ccff; box-shadow:0 0 4px #00ccff; flex-shrink:0; }
+        .pi .pip.self { background:#00ff00; box-shadow:0 0 4px #00ff00; }
+
+        /* ===== RADAR ===== */
+        .radar-area {
+            flex:1; display:flex; flex-direction:column;
+            align-items:center; justify-content:center;
+            padding:15px; position:relative;
+        }
+        .rh { text-align:center; margin-bottom:10px; }
+        .rh h1 { font-size:20px; letter-spacing:5px; text-shadow:0 0 18px #00ff00,0 0 35px rgba(0,255,0,0.2); }
+        .rh .sub { font-size:9px; color:rgba(0,255,0,0.4); letter-spacing:3px; margin-top:3px; }
+        .rh .view-label {
+            font-size:11px; color:#00ccff; letter-spacing:2px; margin-top:4px;
+            min-height:16px; text-shadow:0 0 8px rgba(0,200,255,0.5);
+        }
+        .sbar {
+            display:flex; justify-content:space-between;
+            width:100%; max-width:560px; font-size:9px; opacity:0.6; margin-bottom:6px;
+        }
+
+        .rwrap { position:relative; width:520px; height:520px; }
+
+        .rs {
+            position:relative; width:100%; height:100%; border-radius:50%;
+            background:radial-gradient(circle,#001a00 0%,#001200 50%,#000a00 100%);
+            border:2px solid rgba(0,255,0,0.35); overflow:hidden;
+            box-shadow:0 0 30px rgba(0,255,0,0.2),inset 0 0 60px rgba(0,255,0,0.03);
+            cursor:crosshair; animation:fl 8s infinite;
+        }
+        @keyframes fl { 93%{opacity:0.88;} 94%{opacity:1;} 96%{opacity:0.92;} 97%{opacity:1;} }
+
+        .rs::before {
+            content:''; position:absolute; inset:0;
+            background:
+                radial-gradient(circle,transparent 19%,rgba(0,255,0,0.1) 20%,transparent 21%),
+                radial-gradient(circle,transparent 39%,rgba(0,255,0,0.08) 40%,transparent 41%),
+                radial-gradient(circle,transparent 59%,rgba(0,255,0,0.06) 60%,transparent 61%),
+                radial-gradient(circle,transparent 79%,rgba(0,255,0,0.04) 80%,transparent 81%);
+            pointer-events:none;
+        }
+
+        .xh,.xv { position:absolute; background:rgba(0,255,0,0.06); pointer-events:none; }
+        .xh { width:100%; height:1px; top:50%; }
+        .xv { width:1px; height:100%; left:50%; }
+        .xd1,.xd2 { position:absolute; width:141%; height:1px; top:50%; left:-20.5%; background:rgba(0,255,0,0.04); pointer-events:none; }
+        .xd1 { transform:rotate(45deg); }
+        .xd2 { transform:rotate(-45deg); }
+
+        .center-pip {
+            position:absolute; width:8px; height:8px; background:#00ff00;
+            border-radius:50%; top:50%; left:50%; transform:translate(-50%,-50%);
+            box-shadow:0 0 12px #00ff00; z-index:10; pointer-events:none;
+        }
+        .center-pip.op { background:#00ccff; box-shadow:0 0 12px #00ccff; width:10px; height:10px; }
+
+        .sw {
+            position:absolute; width:50%; height:2px; top:50%; left:50%;
+            transform-origin:left center;
+            background:linear-gradient(to right,rgba(0,255,0,0.85),rgba(0,255,0,0.1),transparent);
+            animation:swp 4s linear infinite; z-index:5; pointer-events:none;
+        }
+        .swg {
+            position:absolute; width:50%; height:50%; top:50%; left:50%;
+            transform-origin:top left;
+            background:conic-gradient(from 0deg,rgba(0,255,0,0.12) 0deg,rgba(0,255,0,0.04) 25deg,transparent 40deg);
+            animation:swp 4s linear infinite; z-index:4; pointer-events:none;
+        }
+        @keyframes swp { to{transform:rotate(360deg);} }
+
+        .scan {
+            position:absolute; inset:0; border-radius:50%;
+            background:repeating-linear-gradient(transparent,transparent 3px,rgba(0,0,0,0.1) 3px,rgba(0,0,0,0.1) 6px);
+            pointer-events:none; z-index:8; opacity:0.3;
+        }
+
+        .dl { position:absolute; font-size:11px; color:rgba(0,255,0,0.4); font-weight:bold; pointer-events:none; z-index:3; }
+        .dn { top:8px; left:50%; transform:translateX(-50%); }
+        .ds_ { bottom:8px; left:50%; transform:translateX(-50%); }
+        .de { right:12px; top:50%; transform:translateY(-50%); }
+        .dw { left:12px; top:50%; transform:translateY(-50%); }
+
+        /* Blips */
+        .blip {
+            position:absolute; border-radius:50%; transform:translate(-50%,-50%);
+            z-index:6; cursor:pointer; transition:opacity 0.15s;
+        }
+        .blip.friendly { background:#3399ff; box-shadow:0 0 8px #3399ff; }
+        .blip.hostile { background:#ff3333; box-shadow:0 0 8px #ff3333; }
+        .blip.unknown { background:#ffff00; box-shadow:0 0 6px #ffff00; }
+        .blip.neutral { background:#00aa00; box-shadow:0 0 6px #00aa00; }
+        .blip.civilian { background:#cc66ff; box-shadow:0 0 6px #cc66ff; }
+        .blip.custom { background:#ff9933; box-shadow:0 0 6px #ff9933; }
+        .blip.operator { background:#00ccff; border:2px solid rgba(255,255,255,0.4); box-shadow:0 0 10px #00ccff; }
+
+        .blip.sq { border-radius:2px; }
+        .blip.dm { border-radius:0; transform:translate(-50%,-50%) rotate(45deg); }
+        .blip.dragging { z-index:50; filter:brightness(1.5); }
+        .blip.is-view { box-shadow:0 0 16px #00ccff,0 0 30px rgba(0,200,255,0.3); }
+
+        .bl {
+            position:absolute; font-size:8px; white-space:nowrap;
+            top:-13px; left:50%; transform:translateX(-50%);
+            pointer-events:none; color:inherit; text-shadow:0 0 3px #000,0 0 4px currentColor;
+        }
+
+        /* Tooltip */
+        .tip {
+            display:none; position:absolute; background:rgba(0,8,0,0.96);
+            border:1px solid rgba(0,255,0,0.5); padding:10px; font-size:9px;
+            z-index:100; pointer-events:none; min-width:155px; max-width:230px;
+        }
+        .tip.vis { display:block; }
+        .tip h4 { font-size:11px; margin-bottom:5px; border-bottom:1px solid rgba(0,255,0,0.2); padding-bottom:4px; }
+        .tr { display:flex; justify-content:space-between; margin:2px 0; }
+        .tl { color:rgba(0,255,0,0.45); }
+        .tn { margin-top:5px; padding-top:5px; border-top:1px solid rgba(0,255,0,0.1); color:rgba(0,255,0,0.6); font-style:italic; font-size:8px; }
+
+        /* Info bar - FIXED JITTER */
+        .ibar { margin-top:12px; display:flex; gap:8px; justify-content:center; }
+        .ib {
+            border:1px solid rgba(0,255,0,0.15); padding:6px 10px;
+            font-size:10px; background:rgba(0,255,0,0.02); text-align:center;
+            border-radius:3px; min-width:75px;
+        }
+        .ib.wide { min-width:110px; } /* FIXED: wider cursor box */
+        .ib .il { color:rgba(0,255,0,0.35); font-size:8px; margin-bottom:2px; letter-spacing:1px; }
+        .ib .iv { color:#00ff00; text-shadow:0 0 5px rgba(0,255,0,0.3); font-weight:bold; white-space:nowrap; }
+
+        .legend { display:flex; gap:10px; margin-top:8px; font-size:8px; justify-content:center; flex-wrap:wrap; }
+        .legend-i { display:flex; align-items:center; gap:4px; }
+        .ldot { width:7px; height:7px; border-radius:50%; }
+
+        .alert {
+            position:absolute; top:8px; left:50%; transform:translateX(-50%);
+            font-size:12px; letter-spacing:3px; opacity:0; z-index:15;
+            padding:5px 18px; border:1px solid rgba(255,50,50,0.4); border-radius:3px;
+            background:rgba(255,50,50,0.1);
+        }
+        .alert.on { opacity:1; animation:abk 0.8s infinite alternate; color:#ff5555; text-shadow:0 0 12px #ff5555; }
+        @keyframes abk { from{opacity:0.6;} to{opacity:1;} }
+
+        .click-ring {
+            position:absolute; border:2px solid rgba(0,255,0,0.5); border-radius:50%;
+            transform:translate(-50%,-50%); pointer-events:none; z-index:15;
+            animation:crng 0.5s ease-out forwards;
+        }
+        @keyframes crng { from{width:6px;height:6px;opacity:1;} to{width:50px;height:50px;opacity:0;} }
+
+        /* Context */
+        .ctx {
+            display:none; position:fixed; background:rgba(5,12,5,0.98);
+            border:1px solid rgba(0,255,0,0.4); z-index:200; min-width:140px;
+        }
+        .ctx.vis { display:block; }
+        .ctx-i { padding:7px 12px; font-size:10px; cursor:pointer; color:#00ff00; }
+        .ctx-i:hover { background:rgba(0,255,0,0.12); }
+        .ctx-i.danger { color:#ff5555; }
+        .ctx-div { height:1px; background:rgba(0,255,0,0.15); }
+
+        /* Modal */
+        .mbg {
+            display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7);
+            z-index:150; justify-content:center; align-items:center;
+        }
+        .mbg.vis { display:flex; }
+        .mbox {
+            background:rgba(0,12,0,0.98); border:1px solid rgba(0,255,0,0.4);
+            padding:18px; min-width:320px; max-width:400px; border-radius:4px;
+        }
+        .mbox h2 { font-size:13px; letter-spacing:2px; margin-bottom:12px; border-bottom:1px solid rgba(0,255,0,0.2); padding-bottom:7px; }
+
+        ::-webkit-scrollbar { width:5px; }
+        ::-webkit-scrollbar-track { background:rgba(0,15,0,0.4); }
+        ::-webkit-scrollbar-thumb { background:rgba(0,255,0,0.25); border-radius:3px; }
+
+        input[type="range"] {
+            -webkit-appearance:none; appearance:none;
+            height:6px; background:rgba(0,255,0,0.1); border-radius:3px; border:none; padding:0;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance:none; width:14px; height:14px;
+            border-radius:50%; background:#00ff00; cursor:pointer; box-shadow:0 0 5px #00ff00;
+        }
+
+        .rs.rotated { transition: transform 0.4s ease; }
+        .dl.rotated-lbl { transition: transform 0.4s ease; }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <div class="panel">
+        <div class="ptitle">▣ SCHUNGZIE RADAR ▣</div>
+        <div class="conn no" id="conn">⊘ CONNECTING...</div>
+
+        <!-- ROOM -->
+        <div class="sec">
+            <h3>📡 LIVE ROOM</h3>
+            <div class="row"><label>ROOM</label><input id="inRoom" value="schungzie-rp"></div>
+            <div class="brow" style="margin-top:5px;">
+                <button class="b" onclick="joinRoom()">JOIN</button>
+                <button class="b" onclick="newRoom()">NEW</button>
+            </div>
+            <div class="room-box" style="margin-top:7px;">
+                <div style="font-size:8px;color:rgba(0,255,0,0.4);">ROOM</div>
+                <div class="room-code" id="roomCode" onclick="copyLink()">---</div>
+                <div style="font-size:9px;color:rgba(0,255,0,0.4);" id="ucount">0 operators</div>
+            </div>
+        </div>
+
+        <!-- YOUR NAME -->
+        <div class="sec">
+            <h3>👤 YOUR NAME</h3>
+            <div class="row"><label>CALL</label><input id="myNameIn" value="SCHUNGZIE" maxlength="20"></div>
+            <button class="b" onclick="setMyName()" style="margin-top:4px;">SET</button>
+        </div>
+
+        <!-- PERSPECTIVE -->
+        <div class="sec">
+            <h3>👁 PERSPECTIVE</h3>
+            <p style="font-size:8px;color:rgba(0,255,0,0.4);margin-bottom:6px;">
+                Switch view to any operator-type contact. Move your view with arrows.
+            </p>
+            <div class="brow">
+                <button class="b active" id="btnGlobal" onclick="viewGlobal()">🌐 GLOBAL</button>
+            </div>
+            <div class="plist" id="plist">
+                <div style="color:rgba(0,200,255,0.3);font-size:9px;text-align:center;padding:6px;">
+                    Add OPERATOR contacts to switch views
+                </div>
+            </div>
+            <div style="text-align:center;margin-top:8px;">
+                <div style="font-size:9px;color:rgba(0,255,0,0.5);margin-bottom:4px;">MOVE VIEW CENTER</div>
+                <div class="arrow-pad">
+                    <div class="ab blank"></div>
+                    <div class="ab" onclick="moveView(0,-2)">▲</div>
+                    <div class="ab blank"></div>
+                    <div class="ab" onclick="moveView(-2,0)">◄</div>
+                    <div class="ab" onclick="moveView(0,0)" style="font-size:8px;">●</div>
+                    <div class="ab" onclick="moveView(2,0)">►</div>
+                    <div class="ab blank"></div>
+                    <div class="ab" onclick="moveView(0,2)">▼</div>
+                    <div class="ab blank"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SWEEP -->
+        <div class="sec">
+            <h3>⏱ SWEEP SPEED</h3>
+            <div class="row"><label>RATE</label>
+                <select id="sweepRate" onchange="setSweep(this.value)">
+                    <option value="8">VERY SLOW</option>
+                    <option value="6">SLOW</option>
+                    <option value="4" selected>NORMAL</option>
+                    <option value="2">FAST</option>
+                    <option value="1">VERY FAST</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- ROTATION -->
+        <div class="sec">
+            <h3>🔄 RADAR ROTATION</h3>
+            <div class="row">
+                <label>ANGLE</label>
+                <input type="range" id="rotSlider" min="0" max="360" value="0" oninput="setRotation(this.value)">
+            </div>
+            <div style="text-align:center;margin:4px 0;">
+                <span style="font-size:14px;color:#00ff00;text-shadow:0 0 8px rgba(0,255,0,0.5);" id="rotDisplay">0°</span>
+                <span style="font-size:9px;color:rgba(0,255,0,0.4);margin-left:6px;" id="rotLabel">NORTH-UP</span>
+            </div>
+            <div class="brow" style="margin-top:6px;">
+                <button class="b" onclick="setRotation(0)">N ↑</button>
+                <button class="b" onclick="setRotation(90)">W ←</button>
+                <button class="b" onclick="setRotation(180)">S ↓</button>
+                <button class="b" onclick="setRotation(270)">E →</button>
+            </div>
+            <button class="b" onclick="setRotation(0)" style="margin-top:5px;">↺ RESET DEFAULT</button>
+        </div>
+
+        <div class="place-ind" id="placeInd">⊕ CLICK RADAR TO PLACE ⊕</div>
+
+        <!-- ADD -->
+        <div class="sec">
+            <h3>➤ ADD CONTACT / OPERATOR</h3>
+            <div class="row"><label>NAME</label><input id="inName" placeholder="Callsign"></div>
+            <div class="row"><label>TYPE</label>
+                <select id="inType">
+                    <option value="friendly">FRIENDLY</option>
+                    <option value="hostile">HOSTILE</option>
+                    <option value="unknown">UNKNOWN</option>
+                    <option value="neutral">NEUTRAL</option>
+                    <option value="civilian">CIVILIAN</option>
+                    <option value="operator">⊕ OPERATOR</option>
+                    <option value="custom">CUSTOM</option>
+                </select>
+            </div>
+            <div class="row"><label>SHAPE</label>
+                <select id="inShape">
+                    <option value="circle">● CIRCLE</option>
+                    <option value="square">■ SQUARE</option>
+                    <option value="diamond">◆ DIAMOND</option>
+                </select>
+            </div>
+            <div class="row"><label>SPEED</label><input type="number" id="inSpd" value="0" min="0" max="9999"></div>
+            <div class="row"><label>HDG</label><input type="number" id="inHdg" value="0" min="0" max="360"></div>
+            <div class="row"><label>ALT</label><input type="number" id="inAlt" value="0" min="-500" max="99999"></div>
+            <div class="row"><label>SIZE</label><input type="range" id="inSize" min="6" max="22" value="12"></div>
+            <div class="row"><label>NOTES</label><textarea id="inNotes" rows="2" placeholder="Notes..."></textarea></div>
+            <div class="brow" style="margin-top:6px;">
+                <button class="b" id="placeBtn" onclick="togglePlace()">⊕ PLACE</button>
+                <button class="b" onclick="addRandom()">⚡ RANDOM</button>
+            </div>
+        </div>
+
+        <!-- SETTINGS -->
+        <div class="sec">
+            <h3>⚙ DISPLAY</h3>
+            <div class="row"><label>RANGE</label>
+                <select id="rangeSel" onchange="setRange(this.value)">
+                    <option value="25">25 NM</option>
+                    <option value="50" selected>50 NM</option>
+                    <option value="100">100 NM</option>
+                    <option value="250">250 NM</option>
+                    <option value="500">500 NM</option>
+                    <option value="750">750 NM</option>
+                </select>
+            </div>
+            <div class="chk"><input type="checkbox" id="chkLbl" checked onchange="togLbl()"><label for="chkLbl">LABELS</label></div>
+            <div class="chk"><input type="checkbox" id="chkFade" checked onchange="togFade()"><label for="chkFade">SWEEP FADE</label></div>
+            <div class="chk"><input type="checkbox" id="chkMove" onchange="togMov()"><label for="chkMove">MOVEMENT</label></div>
+            <div class="chk"><input type="checkbox" id="chkScan" checked onchange="togScan()"><label for="chkScan">SCANLINES</label></div>
+        </div>
+
+        <!-- LIST -->
+        <div class="sec">
+            <h3>📡 ALL CONTACTS (<span id="cc">0</span>)</h3>
+            <div class="clist" id="clist"><div style="color:rgba(0,255,0,0.2);font-size:9px;text-align:center;padding:12px;">No contacts</div></div>
+            <div class="brow" style="margin-top:6px;">
+                <button class="b red" onclick="clearAll()">✕ CLEAR</button>
+                <button class="b" onclick="exprt()">▼ EXPORT</button>
+                <button class="b" onclick="imprt()">▲ IMPORT</button>
+            </div>
+        </div>
+
+        <!-- SCENARIOS -->
+        <div class="sec">
+            <h3>📋 SCENARIOS</h3>
+            <div class="brow"><button class="b" onclick="loadSc('patrol')">PATROL</button><button class="b" onclick="loadSc('combat')">COMBAT</button></div>
+            <div class="brow" style="margin-top:4px;"><button class="b" onclick="loadSc('traffic')">AIR TRAFFIC</button><button class="b" onclick="loadSc('naval')">NAVAL</button></div>
+            <button class="b cyan" onclick="loadSc('ops')" style="margin-top:4px;">⊕ MULTI-OP SCENARIO</button>
+        </div>
+
+        <!-- LOG -->
+        <div class="sec">
+            <h3>📜 LOG</h3>
+            <div class="log" id="logBox"></div>
+            <button class="b" onclick="document.getElementById('logBox').innerHTML=''" style="margin-top:4px;">CLEAR</button>
+        </div>
+    </div>
+
+    <!-- RADAR DISPLAY -->
+    <div class="radar-area">
+        <div class="alert" id="alertBar">⚠ HOSTILE DETECTED ⚠</div>
+        <div class="rh">
+            <h1>▣ SCHUNGZIE RADAR ▣</h1>
+            <div class="sub">LIVE TACTICAL NETWORK</div>
+            <div class="view-label" id="viewLabel"></div>
+        </div>
+        <div class="sbar">
+            <span>SYS: <b style="color:#00ff00;">ONLINE</b></span>
+            <span id="dtDisp">--:-- ZULU</span>
+            <span>LINK: <b id="linkSt" style="color:#ff4444;">OFFLINE</b></span>
+        </div>
+
+        <div class="rwrap" id="rwrap">
+            <div class="rs" id="rs">
+                <div class="xh"></div><div class="xv"></div>
+                <div class="xd1"></div><div class="xd2"></div>
+                <div class="center-pip" id="cpip"></div>
+                <div class="sw" id="swLine"></div>
+                <div class="swg" id="swGlow"></div>
+                <div class="scan" id="scanEl"></div>
+                <span class="dl dn">N</span><span class="dl ds_">S</span>
+                <span class="dl de">E</span><span class="dl dw">W</span>
+                <div class="tip" id="tip"></div>
+            </div>
+        </div>
+
+        <div class="ibar">
+            <div class="ib"><div class="il">CONTACTS</div><div class="iv" id="vC">0</div></div>
+            <div class="ib"><div class="il">RANGE</div><div class="iv" id="vR">50 NM</div></div>
+            <div class="ib"><div class="il">SWEEP</div><div class="iv" id="vS">---°</div></div>
+            <div class="ib wide"><div class="il">CURSOR</div><div class="iv" id="vCur">---</div></div>
+            <div class="ib"><div class="il">VIEW</div><div class="iv" id="vV">GLOBAL</div></div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-i"><div class="ldot" style="background:#3399ff;"></div>FRIENDLY</div>
+            <div class="legend-i"><div class="ldot" style="background:#ff3333;"></div>HOSTILE</div>
+            <div class="legend-i"><div class="ldot" style="background:#ffff00;"></div>UNKNOWN</div>
+            <div class="legend-i"><div class="ldot" style="background:#00aa00;"></div>NEUTRAL</div>
+            <div class="legend-i"><div class="ldot" style="background:#cc66ff;"></div>CIVILIAN</div>
+            <div class="legend-i"><div class="ldot" style="background:#00ccff;border:1px solid rgba(255,255,255,0.3);"></div>OPERATOR</div>
+        </div>
+    </div>
+</div>
+
+<!-- CTX -->
+<div class="ctx" id="ctx">
+    <div class="ctx-i" onclick="editCtx()">✎ EDIT</div>
+    <div class="ctx-i" onclick="dupCtx()">⊕ DUPLICATE</div>
+    <div class="ctx-i" onclick="viewCtx()">👁 VIEW AS</div>
+    <div class="ctx-div"></div>
+    <div class="ctx-i danger" onclick="delCtx()">✕ DELETE</div>
+</div>
+
+<!-- EDIT -->
+<div class="mbg" id="editBg">
+    <div class="mbox">
+        <h2>✎ EDIT CONTACT</h2>
+        <div class="row"><label>NAME</label><input id="edName"></div>
+        <div class="row"><label>TYPE</label>
+            <select id="edType">
+                <option value="friendly">FRIENDLY</option>
+                <option value="hostile">HOSTILE</option>
+                <option value="unknown">UNKNOWN</option>
+                <option value="neutral">NEUTRAL</option>
+                <option value="civilian">CIVILIAN</option>
+                <option value="operator">OPERATOR</option>
+                <option value="custom">CUSTOM</option>
+            </select>
+        </div>
+        <div class="row"><label>SHAPE</label>
+            <select id="edShape">
+                <option value="circle">● CIRCLE</option>
+                <option value="square">■ SQUARE</option>
+                <option value="diamond">◆ DIAMOND</option>
+            </select>
+        </div>
+        <div class="row"><label>SPEED</label><input type="number" id="edSpd" min="0" max="9999"></div>
+        <div class="row"><label>HDG</label><input type="number" id="edHdg" min="0" max="360"></div>
+        <div class="row"><label>ALT</label><input type="number" id="edAlt" min="-500" max="99999"></div>
+        <div class="row"><label>SIZE</label><input type="range" id="edSize" min="6" max="22"></div>
+        <div class="row"><label>NOTES</label><textarea id="edNotes" rows="2"></textarea></div>
+        <div class="brow" style="margin-top:12px;">
+            <button class="b" onclick="saveEdit()">✓ SAVE</button>
+            <button class="b red" onclick="closeEdit()">✕ CANCEL</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBRQ_UztF2lwcX81RVinv-5FBaumAclAuk",
+        authDomain: "schungdar.firebaseapp.com",
+        databaseURL: "https://schungdar-default-rtdb.firebaseio.com",
+        projectId: "schungdar",
+        storageBucket: "schungdar.firebasestorage.app",
+        messagingSenderId: "448271329140",
+        appId: "1:448271329140:web:a69f2a5574d243e800ae21",
+        measurementId: "G-01PFJWNWB1"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // STATE
+    let C = {};               // all contacts
+    let room = null;
+    let cRef = null, pRef = null;
+    let placing = false;
+    let selId = null, ctxId = null;
+    let dragC = null, dragOff = {x:0,y:0};
+    let fadeOn = true, moveOn = false;
+    let range = 50;
+    let myId = 'u' + Math.random().toString(36).slice(2,8);
+    let myName = 'SCHUNGZIE';
+    let radarRot = 0; // radar rotation degrees
+
+    // VIEW: 'global' or a contact ID (must be operator type)
+    let viewMode = 'global';
+    let viewCenter = {x:50, y:50};  // current view center in global %
+
+    const RS = document.getElementById('rs');
+    const tip = document.getElementById('tip');
+    const ctx = document.getElementById('ctx');
+
+        // ===== ROTATION =====
+    function setRotation(deg) {
+        radarRot = parseInt(deg) || 0;
+        if (radarRot < 0) radarRot += 360;
+        if (radarRot >= 360) radarRot -= 360;
+
+        // Rotate the radar screen
+        RS.style.transform = 'rotate(' + radarRot + 'deg)';
+        RS.classList.add('rotated');
+
+        // Counter-rotate all blip labels so text stays upright
+        for (const k in C) {
+            const lbl = C[k].el ? C[k].el.querySelector('.bl') : null;
+            if (lbl) lbl.style.transform = 'translateX(-50%) rotate(' + (-radarRot) + 'deg)';
+        }
+
+        // Counter-rotate tooltip
+        tip.style.transform = 'rotate(' + (-radarRot) + 'deg)';
+
+        // Update slider and display
+        document.getElementById('rotSlider').value = radarRot;
+        document.getElementById('rotDisplay').textContent = radarRot + '°';
+
+        // Update label
+                const labels = {0:'NORTH-UP', 45:'NE-UP', 90:'WEST-UP', 135:'SW-UP', 180:'SOUTH-UP', 225:'SE-UP', 270:'EAST-UP', 315:'NE-UP'};
+        document.getElementById('rotLabel').textContent = labels[radarRot] || radarRot + '° UP';
+    }
+
+    // ===== VIEW SYSTEM =====
+    function getViewCenter() {
+        if (viewMode === 'global') return {x:50, y:50};
+        const c = C[viewMode];
+        if (c) return {x:c.x, y:c.y};
+        return {x:50, y:50};
+    }
+
+    function globalToView(gx, gy) {
+        const cen = getViewCenter();
+        const vx = 50 + (gx - cen.x);
+        const vy = 50 + (gy - cen.y);
+        const dist = Math.sqrt((vx-50)**2 + (vy-50)**2);
+        if (dist > 49) return null;
+        return {x:vx, y:vy};
+    }
+
+    function viewToGlobal(vx, vy) {
+        const cen = getViewCenter();
+        return {x: cen.x + (vx - 50), y: cen.y + (vy - 50)};
+    }
+
+    function viewGlobal() {
+        viewMode = 'global';
+        document.getElementById('btnGlobal').classList.add('active');
+        document.getElementById('viewLabel').textContent = '';
+        document.getElementById('cpip').className = 'center-pip';
+        document.getElementById('vV').textContent = 'GLOBAL';
+        repositionAll();
+        updatePerspectiveList();
+    }
+
+    function viewAsContact(id) {
+        const c = C[id];
+        if (!c) return;
+        viewMode = id;
+        document.getElementById('btnGlobal').classList.remove('active');
+        document.getElementById('viewLabel').textContent = '◉ VIEWING: ' + (c.callsign||'CONTACT').toUpperCase();
+        document.getElementById('cpip').className = 'center-pip op';
+        document.getElementById('vV').textContent = (c.callsign||'OP').toUpperCase();
+        repositionAll();
+        updatePerspectiveList();
+        L('View: <b>' + c.callsign + '</b>');
+    }
+
+    function moveView(dx, dy) {
+        // If viewing an operator contact, move that contact
+        if (viewMode !== 'global' && C[viewMode]) {
+            const c = C[viewMode];
+            c.x = Math.max(0, Math.min(100, c.x + dx));
+            c.y = Math.max(0, Math.min(100, c.y + dy));
+            syncC(viewMode, c);
+            repositionAll();
+        }
+    }
+
+    function repositionAll() {
+        for (const id in C) posBlip(id);
+    }
+
+    function posBlip(id) {
+        const c = C[id];
+        if (!c || !c.el) return;
+
+        // If this IS the viewed contact, put at center
+        if (id === viewMode) {
+            c.el.style.left = '50%';
+            c.el.style.top = '50%';
+            c.el.style.display = '';
+            c.el.classList.add('is-view');
+            return;
+        }
+
+        c.el.classList.remove('is-view');
+        const pos = globalToView(c.x, c.y);
+        if (!pos) { c.el.style.display = 'none'; return; }
+        c.el.style.display = '';
+        c.el.style.left = pos.x + '%';
+        c.el.style.top = pos.y + '%';
+    }
+
+    // ===== PERSPECTIVE LIST =====
+    function updatePerspectiveList() {
+        const list = document.getElementById('plist');
+        const ops = Object.values(C).filter(c => c.type === 'operator');
+
+        if (ops.length === 0) {
+            list.innerHTML = '<div style="color:rgba(0,200,255,0.3);font-size:9px;text-align:center;padding:6px;">Add OPERATOR contacts to switch views</div>';
+            return;
+        }
+
+        list.innerHTML = '';
+        ops.forEach(c => {
+            const isViewing = viewMode === c.id;
+            const item = document.createElement('div');
+            item.className = 'pi' + (isViewing ? ' viewing' : '');
+            item.innerHTML = `
+                <div class="pip"></div>
+                <div style="flex:1;">
+                    <div style="font-weight:bold;">${c.callsign}</div>
+                    <div style="font-size:8px;color:rgba(0,200,255,0.4);">${c.speed||0}KTS HDG${c.heading||0}° ALT${c.altitude||0}</div>
+                </div>
+                ${isViewing ? '<span style="color:#00ccff;">◉</span>' : '<span style="color:rgba(0,200,255,0.3);font-size:8px;">VIEW</span>'}
+            `;
+            item.addEventListener('click', () => viewAsContact(c.id));
+            list.appendChild(item);
+        });
+    }
+
+    // ===== ROOM =====
+    function joinRoom() {
+        const rn = document.getElementById('inRoom').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'') || 'schungzie-rp';
+        if (room === rn) return;
+        if (room) leaveRoom();
+        room = rn;
+        document.getElementById('roomCode').textContent = rn.toUpperCase();
+
+        cRef = db.ref('rooms/' + rn + '/contacts');
+        pRef = db.ref('rooms/' + rn + '/presence');
+
+        const me = pRef.child(myId);
+        me.set({name:myName, t:Date.now()});
+        me.onDisconnect().remove();
+
+        cRef.on('child_added', s => onAdd(s.key, s.val()));
+        cRef.on('child_changed', s => onChange(s.key, s.val()));
+        cRef.on('child_removed', s => onRemove(s.key));
+
+        pRef.on('value', s => {
+            const u = s.val() || {};
+            document.getElementById('ucount').textContent = Object.keys(u).length + ' operators';
+        });
+
+        db.ref('.info/connected').on('value', s => {
+            const ok = s.val();
+            document.getElementById('conn').className = ok ? 'conn ok' : 'conn no';
+            document.getElementById('conn').textContent = ok ? '● CONNECTED — LIVE' : '⊘ DISCONNECTED';
+            document.getElementById('linkSt').textContent = ok ? 'LIVE' : 'OFFLINE';
+            document.getElementById('linkSt').style.color = ok ? '#00ff00' : '#ff4444';
+        });
+
+        L('Joined: <b>' + rn.toUpperCase() + '</b>');
+    }
+
+    function leaveRoom() {
+        if (!room) return;
+        if (pRef) pRef.child(myId).remove();
+        if (cRef) cRef.off();
+        if (pRef) pRef.off();
+        for (const k in C) { if (C[k].el) C[k].el.remove(); }
+        C = {};
+        updUI();
+    }
+
+    function newRoom() { document.getElementById('inRoom').value = Math.random().toString(36).slice(2,7); joinRoom(); }
+
+    function copyLink() {
+        const url = location.origin + location.pathname + '?room=' + room;
+        navigator.clipboard.writeText(url).then(() => {
+            const el = document.getElementById('roomCode');
+            const o = el.textContent;
+            el.textContent = 'COPIED!';
+            setTimeout(() => el.textContent = o, 1200);
+        }).catch(() => prompt('Copy:', url));
+    }
+
+    function setMyName() {
+        myName = document.getElementById('myNameIn').value.trim() || 'SCHUNGZIE';
+        if (pRef) pRef.child(myId).update({name:myName});
+        L('Name: <b>' + myName + '</b>');
+    }
+
+    // ===== FIREBASE HANDLERS =====
+    function onAdd(id, d) {
+        d.id = id;
+        makeBlip(d);
+        L('[NEW] <b>' + (d.callsign||'CONTACT') + '</b> [' + (d.type||'').toUpperCase() + ']');
+    }
+
+    function onChange(id, d) {
+        d.id = id;
+        // FIXED: Update the data object, keep the element
+        const old = C[id];
+        if (old && old.el) {
+            // Update data
+            Object.assign(old, d);
+            // Update element visuals
+            old.el.className = 'blip ' + (d.type||'unknown')
+                + (d.shape==='square'?' sq':'')
+                + (d.shape==='diamond'?' dm':'')
+                + (id===viewMode?' is-view':'');
+            old.el.style.width = (d.size||12)+'px';
+            old.el.style.height = (d.size||12)+'px';
+            const lbl = old.el.querySelector('.bl');
+            if (lbl) lbl.textContent = d.callsign || 'CONTACT';
+            posBlip(id);
+            updUI();
+            chkAlert();
+        } else {
+            makeBlip(d);
+        }
+    }
+
+    function onRemove(id) {
+        if (C[id]) {
+            if (C[id].el) C[id].el.remove();
+            L('[RM] <b>' + (C[id].callsign||id) + '</b>');
+            if (viewMode === id) viewGlobal();
+            delete C[id];
+            updUI();
+            chkAlert();
+            updatePerspectiveList();
+        }
+    }
+
+    function makeBlip(d) {
+        if (C[d.id] && C[d.id].el) C[d.id].el.remove();
+
+        const el = document.createElement('div');
+        el.className = 'blip ' + (d.type||'unknown')
+            + (d.shape==='square'?' sq':'')
+            + (d.shape==='diamond'?' dm':'');
+        el.style.width = (d.size||12)+'px';
+        el.style.height = (d.size||12)+'px';
+
+        const lbl = document.createElement('div');
+        lbl.className = 'bl';
+        if (radarRot !== 0) lbl.style.transform = 'translateX(-50%) rotate(' + (-radarRot) + 'deg)';
+        lbl.textContent = d.callsign || 'CONTACT';
+        if (!document.getElementById('chkLbl').checked) lbl.style.display = 'none';
+        el.appendChild(lbl);
+
+        const c = {...d, el, lastSweep: 0};
+
+        el.addEventListener('mouseenter', e => showTip(e, c));
+        el.addEventListener('mouseleave', () => tip.classList.remove('vis'));
+        el.addEventListener('mousedown', e => startDrag(e, c));
+        el.addEventListener('contextmenu', e => openCtx(e, c));
+        el.addEventListener('click', e => { e.stopPropagation(); selId = c.id; updUI(); });
+
+        RS.appendChild(el);
+        C[d.id] = c;
+        posBlip(d.id);
+        updUI();
+        chkAlert();
+        updatePerspectiveList();
+    }
+
+    // ===== SYNC =====
+    function syncC(id, c) {
+        if (!cRef) return;
+        cRef.child(id).update({
+            x:c.x, y:c.y,
+            callsign:c.callsign, type:c.type, shape:c.shape||'circle',
+            speed:c.speed||0, heading:c.heading||0, altitude:c.altitude||0,
+            size:c.size||12, notes:c.notes||'',
+            by:myName, ts:Date.now()
+        });
+    }
+
+    function addC(x, y, d) {
+        if (!cRef) { L('ERROR: No room!'); return; }
+        const id = 'c' + Date.now() + Math.random().toString(36).slice(2,5);
+        cRef.child(id).set({
+            x, y,
+            callsign: d.callsign || 'CONTACT-' + Math.floor(Math.random()*999),
+            type: d.type||'unknown', shape: d.shape||'circle',
+            speed: d.speed||0, heading: d.heading||0, altitude: d.altitude||0,
+            size: d.size||12, notes: d.notes||'',
+            by: myName, ts: Date.now()
+        });
+    }
+
+    function clearAll() { if (cRef) cRef.remove(); viewGlobal(); }
+
+    // ===== PLACE =====
+    function togglePlace() {
+        placing = !placing;
+        const btn = document.getElementById('placeBtn');
+        const ind = document.getElementById('placeInd');
+        if (placing) { btn.classList.add('place'); btn.textContent='⊗ CANCEL'; ind.classList.add('vis'); }
+        else { btn.classList.remove('place'); btn.textContent='⊕ PLACE'; ind.classList.remove('vis'); }
+    }
+
+    RS.addEventListener('click', e => {
+        if (!placing) return;
+        if (e.target.closest('.blip')) return;
+        const r = RS.getBoundingClientRect();
+        const vx = ((e.clientX-r.left)/r.width)*100;
+        const vy = ((e.clientY-r.top)/r.height)*100;
+        if (Math.sqrt((vx-50)**2+(vy-50)**2) > 49) return;
+
+        const rip = document.createElement('div');
+        rip.className='click-ring'; rip.style.left=vx+'%'; rip.style.top=vy+'%';
+        RS.appendChild(rip); setTimeout(()=>rip.remove(),600);
+
+        const gl = viewToGlobal(vx, vy);
+        addC(gl.x, gl.y, {
+            callsign: document.getElementById('inName').value || undefined,
+            type: document.getElementById('inType').value,
+            shape: document.getElementById('inShape').value,
+            speed: parseInt(document.getElementById('inSpd').value)||0,
+            heading: parseInt(document.getElementById('inHdg').value)||0,
+            altitude: parseInt(document.getElementById('inAlt').value)||0,
+            size: parseInt(document.getElementById('inSize').value)||12,
+            notes: document.getElementById('inNotes').value||''
+        });
+        document.getElementById('inName').value = '';
+        document.getElementById('inNotes').value = '';
+    });
+
+    function addRandom() {
+        const nm=['HAWK','VIPER','GHOST','RAVEN','STORM','SHADOW','EAGLE','WOLF','COBRA','PHOENIX','FALCON','REAPER'];
+        const tp=['friendly','hostile','unknown','neutral','civilian','operator'];
+        const sh=['circle','square','diamond'];
+        const a=Math.random()*Math.PI*2, d=Math.random()*38+5;
+        const cen = getViewCenter();
+        addC(cen.x+Math.cos(a)*d, cen.y+Math.sin(a)*d, {
+            callsign:nm[Math.floor(Math.random()*nm.length)]+'-'+Math.floor(Math.random()*99+1),
+            type:tp[Math.floor(Math.random()*tp.length)],
+            shape:sh[Math.floor(Math.random()*sh.length)],
+            speed:Math.floor(Math.random()*600),
+            heading:Math.floor(Math.random()*360),
+            altitude:Math.floor(Math.random()*45000)-500,
+            size:Math.floor(Math.random()*12)+8
+        });
+    }
+
+    // ===== DRAG =====
+    function startDrag(e, c) {
+        if (e.button!==0 || placing) return;
+        e.preventDefault(); e.stopPropagation();
+        dragC = c; c.el.classList.add('dragging');
+        const r = RS.getBoundingClientRect();
+        const pos = globalToView(c.x, c.y);
+        if (!pos && c.id === viewMode) { // viewed contact at center
+            dragOff.x = e.clientX - (r.left + r.width*0.5);
+            dragOff.y = e.clientY - (r.top + r.height*0.5);
+        } else if (pos) {
+            dragOff.x = e.clientX - (r.left + pos.x/100*r.width);
+            dragOff.y = e.clientY - (r.top + pos.y/100*r.height);
+        }
+    }
+
+    document.addEventListener('mousemove', e => {
+        if (!dragC) return;
+        const r = RS.getBoundingClientRect();
+        let vx = ((e.clientX - dragOff.x - r.left)/r.width)*100;
+        let vy = ((e.clientY - dragOff.y - r.top)/r.height)*100;
+        const dx=vx-50, dy=vy-50, dist=Math.sqrt(dx*dx+dy*dy);
+        if (dist>49) { const s=49/dist; vx=50+dx*s; vy=50+dy*s; }
+
+        const gl = viewToGlobal(vx, vy);
+        dragC.x = gl.x; dragC.y = gl.y;
+
+        // Update position visually
+        if (dragC.id === viewMode) {
+            // If dragging the viewed contact, reposition everything
+            repositionAll();
+        } else {
+            dragC.el.style.left = vx+'%';
+            dragC.el.style.top = vy+'%';
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (dragC) {
+            dragC.el.classList.remove('dragging');
+            syncC(dragC.id, dragC);
+            L('Moved <b>'+dragC.callsign+'</b>');
+            dragC = null;
+            // FIXED: Update list to show new position info
+            updUI();
+        }
+    });
+
+    // ===== TOOLTIP =====
+    function showTip(e, c) {
+        // FIXED: Always read fresh data from C
+        const fresh = C[c.id] || c;
+        const r = RS.getBoundingClientRect();
+        const cen = getViewCenter();
+        const dx = fresh.x-cen.x, dy = fresh.y-cen.y;
+        const dist = (Math.sqrt(dx*dx+dy*dy)/50*range).toFixed(1);
+        let brg = Math.atan2(dx,-dy)*(180/Math.PI);
+        if (brg<0) brg+=360;
+
+        tip.innerHTML = `
+            <h4>${fresh.callsign}</h4>
+            <div class="tr"><span class="tl">TYPE</span><span>${(fresh.type||'').toUpperCase()}</span></div>
+            <div class="tr"><span class="tl">BRG</span><span>${brg.toFixed(0)}°</span></div>
+            <div class="tr"><span class="tl">RNG</span><span>${dist} NM</span></div>
+            <div class="tr"><span class="tl">SPD</span><span>${fresh.speed||0} KTS</span></div>
+            <div class="tr"><span class="tl">HDG</span><span>${fresh.heading||0}°</span></div>
+            <div class="tr"><span class="tl">ALT</span><span>${fresh.altitude||0} FT</span></div>
+            <div class="tr"><span class="tl">BY</span><span>${fresh.by||'LOCAL'}</span></div>
+            ${fresh.notes ? `<div class="tn">"${fresh.notes}"</div>` : ''}
+        `;
+
+        // Position tip near blip
+        const pos = globalToView(fresh.x, fresh.y) || {x:50,y:50};
+        let left = (pos.x/100)*r.width + 15;
+        let top = (pos.y/100)*r.height - 30;
+        if (left+170>r.width) left-=195;
+        if (top<10) top+=50;
+        tip.style.left=left+'px'; tip.style.top=top+'px';
+        tip.classList.add('vis');
+    }
+
+    // ===== CONTEXT =====
+    function openCtx(e, c) {
+        e.preventDefault(); e.stopPropagation();
+        ctxId = c.id;
+        ctx.style.left = e.clientX+'px'; ctx.style.top = e.clientY+'px';
+        ctx.classList.add('vis');
+    }
+
+    document.addEventListener('click', () => ctx.classList.remove('vis'));
+    document.addEventListener('contextmenu', e => { if (!e.target.closest('.blip')) ctx.classList.remove('vis'); });
+
+    function editCtx() {
+        const c = C[ctxId]; if (!c) return; selId = ctxId;
+        document.getElementById('edName').value = c.callsign||'';
+        document.getElementById('edType').value = c.type||'unknown';
+        document.getElementById('edShape').value = c.shape||'circle';
+        document.getElementById('edSpd').value = c.speed||0;
+        document.getElementById('edHdg').value = c.heading||0;
+        document.getElementById('edAlt').value = c.altitude||0;
+        document.getElementById('edSize').value = c.size||12;
+        document.getElementById('edNotes').value = c.notes||'';
+        document.getElementById('editBg').classList.add('vis');
+    }
+
+    function closeEdit() { document.getElementById('editBg').classList.remove('vis'); }
+
+    function saveEdit() {
+        if (!selId || !C[selId] || !cRef) return;
+        cRef.child(selId).update({
+            callsign: document.getElementById('edName').value,
+            type: document.getElementById('edType').value,
+            shape: document.getElementById('edShape').value,
+            speed: parseInt(document.getElementById('edSpd').value)||0,
+            heading: parseInt(document.getElementById('edHdg').value)||0,
+            altitude: parseInt(document.getElementById('edAlt').value)||0,
+            size: parseInt(document.getElementById('edSize').value)||12,
+            notes: document.getElementById('edNotes').value,
+            by:myName, ts:Date.now()
+        });
+        closeEdit();
+    }
+
+    function dupCtx() {
+        const c = C[ctxId]; if (!c) return;
+        addC(c.x+3, c.y+3, {
+            callsign:c.callsign+'-DUP', type:c.type, shape:c.shape,
+            speed:c.speed, heading:c.heading, altitude:c.altitude,
+            size:c.size, notes:c.notes
+        });
+    }
+
+    function viewCtx() {
+        const c = C[ctxId]; if (!c) return;
+        viewAsContact(ctxId);
+    }
+
+    function delCtx() { if (ctxId && cRef) cRef.child(ctxId).remove(); }
+
+    // ===== SWEEP =====
+    function setSweep(v) {
+        document.getElementById('swLine').style.animationDuration = v+'s';
+        document.getElementById('swGlow').style.animationDuration = v+'s';
+    }
+
+    function sweepLoop() {
+        const sw = document.getElementById('swLine');
+        const st = getComputedStyle(sw);
+        const mx = st.transform;
+        if (mx !== 'none') {
+            const v = mx.split('(')[1].split(')')[0].split(',');
+            let angle = Math.round(Math.atan2(parseFloat(v[1]),parseFloat(v[0]))*(180/Math.PI));
+            if (angle<0) angle+=360;
+            document.getElementById('vS').textContent = angle+'°';
+
+            for (const k in C) {
+                const c = C[k];
+                if (!c.el) continue;
+                const pos = (k===viewMode) ? {x:50,y:50} : globalToView(c.x,c.y);
+                if (!pos) continue;
+                const dx=pos.x-50, dy=pos.y-50;
+                let ba = Math.atan2(dy,dx)*(180/Math.PI);
+                if (ba<0) ba+=360;
+                const diff = Math.abs(angle-ba);
+                if (diff<10 || diff>350) {
+                    c.el.style.opacity='1';
+                    c.lastSweep = Date.now();
+                } else if (fadeOn) {
+                    const elapsed = Date.now() - c.lastSweep;
+                    c.el.style.opacity = Math.max(0.1, 1-elapsed/3500);
+                }
+            }
+        }
+        requestAnimationFrame(sweepLoop);
+    }
+
+    // ===== MOVEMENT =====
+    function moveLoop() {
+        if (!moveOn) return;
+        for (const k in C) {
+            const c = C[k];
+            if (!c.speed) continue;
+            const rad=c.heading*(Math.PI/180);
+            const spd=c.speed/85000;
+            c.x += Math.sin(rad)*spd;
+            c.y -= Math.cos(rad)*spd;
+            posBlip(k);
+        }
+    }
+
+    // ===== CURSOR - FIXED JITTER =====
+    RS.addEventListener('mousemove', e => {
+        const r = RS.getBoundingClientRect();
+        const vx = ((e.clientX-r.left)/r.width)*100-50;
+        const vy = ((e.clientY-r.top)/r.height)*100-50;
+        let a = Math.atan2(vx,-vy)*(180/Math.PI);
+        if (a<0) a+=360;
+        const d = Math.sqrt(vx*vx+vy*vy)/50*range;
+        // FIXED: Use fixed-width formatting to prevent jitter
+        document.getElementById('vCur').textContent = String(Math.round(a)).padStart(3,' ')+'° / '+d.toFixed(1)+' NM';
+    });
+
+    // ===== UI =====
+    function updUI() {
+        const n = Object.keys(C).length;
+        document.getElementById('cc').textContent = n;
+        document.getElementById('vC').textContent = n;
+        buildList();
+        updatePerspectiveList();
+    }
+
+    function buildList() {
+        const list = document.getElementById('clist');
+        const arr = Object.values(C);
+        if (!arr.length) { list.innerHTML='<div style="color:rgba(0,255,0,0.2);font-size:9px;text-align:center;padding:12px;">No contacts</div>'; return; }
+        list.innerHTML='';
+        arr.forEach(c => {
+            const it = document.createElement('div');
+            it.className = 'ci'+(c.id===selId?' sel':'');
+            it.innerHTML = `
+                <div class="cd ${c.type}"></div>
+                <div class="cmeta">
+                    <div class="cname">${c.callsign}</div>
+                    <div class="csub">${(c.type||'').toUpperCase()} | ${c.speed||0}KTS | ${c.heading||0}° | ${c.altitude||0}FT</div>
+                </div>
+                <span class="cdel" data-id="${c.id}">✕</span>
+            `;
+            it.querySelector('.cdel').addEventListener('click', e => { e.stopPropagation(); if (cRef) cRef.child(c.id).remove(); });
+            it.addEventListener('click', () => { selId=c.id; updUI(); });
+            it.addEventListener('dblclick', () => { ctxId=c.id; editCtx(); });
+            list.appendChild(it);
+        });
+    }
+
+    function chkAlert() {
+        document.getElementById('alertBar').classList.toggle('on', Object.values(C).some(c=>c.type==='hostile'));
+    }
+
+    // ===== SETTINGS =====
+    function setRange(v) { range=parseInt(v); document.getElementById('vR').textContent=v+' NM'; }
+    function togLbl() {
+        const on=document.getElementById('chkLbl').checked;
+        for (const k in C) { const l=C[k].el?.querySelector('.bl'); if(l) l.style.display=on?'':'none'; }
+    }
+    function togFade() { fadeOn=document.getElementById('chkFade').checked; if(!fadeOn) for(const k in C) if(C[k].el) C[k].el.style.opacity=1; }
+    function togMov() { moveOn=document.getElementById('chkMove').checked; }
+    function togScan() { document.getElementById('scanEl').style.display=document.getElementById('chkScan').checked?'':'none'; }
+
+    // ===== SCENARIOS =====
+    function loadSc(name) {
+        clearAll();
+        setTimeout(() => {
+            const sc = {
+                patrol:[
+                    {x:45,y:40,callsign:'PATROL-1',type:'friendly',speed:250,heading:90,altitude:15000},
+                    {x:43,y:43,callsign:'PATROL-2',type:'friendly',speed:250,heading:90,altitude:15000},
+                    {x:70,y:35,callsign:'BOGEY',type:'unknown',shape:'diamond',speed:400,heading:270,altitude:20000},
+                    {x:60,y:65,callsign:'AWACS',type:'friendly',shape:'square',size:14,speed:300,heading:180,altitude:30000}
+                ],
+                combat:[
+                    {x:40,y:35,callsign:'STRIKE-1',type:'friendly',speed:550,heading:45,altitude:18000},
+                    {x:70,y:20,callsign:'BANDIT-1',type:'hostile',shape:'diamond',speed:650,heading:240,altitude:25000},
+                    {x:73,y:23,callsign:'BANDIT-2',type:'hostile',shape:'diamond',speed:640,heading:235,altitude:24000},
+                    {x:80,y:40,callsign:'SAM',type:'hostile',shape:'square',size:12,speed:0,altitude:0,notes:'SAM Site'}
+                ],
+                traffic:[
+                    {x:30,y:20,callsign:'UAL-442',type:'civilian',speed:480,heading:135,altitude:37000},
+                    {x:55,y:30,callsign:'DAL-118',type:'civilian',speed:510,heading:200,altitude:39000},
+                    {x:50,y:45,callsign:'TOWER',type:'friendly',shape:'square',size:14,speed:0,altitude:0}
+                ],
+                naval:[
+                    {x:48,y:48,callsign:'CVN-71',type:'friendly',shape:'square',size:16,speed:30,heading:90,altitude:0,notes:'Carrier'},
+                    {x:42,y:45,callsign:'DDG-52',type:'friendly',shape:'square',speed:28,heading:85,altitude:0},
+                    {x:75,y:30,callsign:'CONTACT-X',type:'unknown',shape:'diamond',speed:18,heading:200,altitude:0},
+                    {x:80,y:60,callsign:'SUB',type:'hostile',shape:'diamond',size:8,speed:8,heading:315,altitude:-200}
+                ],
+                ops:[
+                    {x:35,y:35,callsign:'PILOT-1',type:'operator',speed:450,heading:90,altitude:25000,size:14,notes:'Flight Lead'},
+                    {x:65,y:65,callsign:'PILOT-2',type:'operator',speed:420,heading:270,altitude:22000,size:14,notes:'Wingman'},
+                    {x:20,y:70,callsign:'GROUND-OP',type:'operator',shape:'square',speed:0,heading:0,altitude:0,size:12,notes:'Ground Controller'},
+                    {x:75,y:25,callsign:'HOSTILE-ACE',type:'hostile',shape:'diamond',speed:600,heading:225,altitude:28000},
+                    {x:50,y:15,callsign:'BOGEY-7',type:'unknown',speed:300,heading:180,altitude:18000},
+                    {x:40,y:80,callsign:'CARGO-12',type:'civilian',speed:120,heading:45,altitude:35000},
+                    {x:60,y:42,callsign:'AWACS-1',type:'friendly',shape:'square',size:16,speed:280,heading:180,altitude:32000}
+                ]
+            };
+            (sc[name]||[]).forEach(d => addC(d.x, d.y, d));
+            L('Loaded: <b>'+name.toUpperCase()+'</b>');
+        }, 300);
+    }
+
+    // ===== EXPORT =====
+    function exprt() {
+        const data = Object.values(C).map(c=>({
+            x:c.x,y:c.y,callsign:c.callsign,type:c.type,shape:c.shape,
+            speed:c.speed,heading:c.heading,altitude:c.altitude,size:c.size,notes:c.notes
+        }));
+        const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a'); a.href=url; a.download='schungzie-radar.json'; a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function imprt() {
+        const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
+        inp.onchange=e=>{
+            const f=e.target.files[0]; if(!f)return;
+            const r=new FileReader();
+            r.onload=ev=>{
+                try { const arr=JSON.parse(ev.target.result); clearAll(); arr.forEach(d=>addC(d.x,d.y,d)); L('Imported '+arr.length); }
+                catch(e) { L('ERROR: Bad file'); }
+            };
+            r.readAsText(f);
+        };
+        inp.click();
+    }
+
+    // ===== LOG =====
+    function L(msg) {
+        const box=document.getElementById('logBox');
+        const d=document.createElement('div');
+        d.innerHTML='<span style="color:rgba(0,255,0,0.25);">['+new Date().toLocaleTimeString()+']</span> '+msg;
+        box.insertBefore(d,box.firstChild);
+        if(box.children.length>40) box.removeChild(box.lastChild);
+    }
+
+    // ===== KEYBOARD =====
+    document.addEventListener('keydown', e => {
+        if (e.key==='Escape') { if(placing)togglePlace(); closeEdit(); ctx.classList.remove('vis'); }
+        if (e.key==='Delete' && selId && cRef) cRef.child(selId).remove();
+        // Arrow keys move view
+        if (viewMode !== 'global') {
+            if (e.key==='ArrowUp') { moveView(0,-2); e.preventDefault(); }
+            if (e.key==='ArrowDown') { moveView(0,2); e.preventDefault(); }
+            if (e.key==='ArrowLeft') { moveView(-2,0); e.preventDefault(); }
+            if (e.key==='ArrowRight') { moveView(2,0); e.preventDefault(); }
+        }
+    });
+
+    // ===== CLOCK =====
+    function tick() {
+        const now=new Date();
+        document.getElementById('dtDisp').textContent = now.toUTCString().split(' ')[4]+' ZULU';
+    }
+
+    // ===== URL ROOM =====
+    const params = new URLSearchParams(location.search);
+    if (params.get('room')) document.getElementById('inRoom').value = params.get('room');
+
+    // ===== INIT =====
+    sweepLoop();
+    setInterval(tick, 1000);
+    setInterval(moveLoop, 60);
+    tick();
+    L("Schungzie's Radar System ready");
+    L('Tip: Add OPERATOR type → click VIEW AS');
+    L('Tip: Arrow keys move view position');
+    setTimeout(()=>joinRoom(), 400);
+</script>
+</body>
+</html><select id="sweepRate" onchange="setSweep(this.value)">
